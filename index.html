@@ -2765,6 +2765,7 @@
                 showToast(`✅ 导出 ${selectEntries.length} 条数据成功！`, 'success');
             }
 
+            // ===== 修复：导入时正确识别“类型”列 =====
             function importSelectCSV(file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -2794,8 +2795,16 @@
                             if (c === '分类' || c === 'meta') metaIdx = i;
                             if (c === '高亮' || c === 'highlight') hlIdx = i;
                         });
+                        // 如果没有找到“类型”列，尝试用“分类”列作为类型
+                        if (catIdx === -1) {
+                            // 再检查一遍是否把“分类”当成了“类型”
+                            header.forEach((col, i) => {
+                                const c = col.trim();
+                                if ((c === '分类' || c === 'category' || c === '类型') && catIdx === -1) catIdx = i;
+                            });
+                        }
                         if (brandIdx === -1 || modelIdx === -1 || levelIdx === -1 || catIdx === -1) {
-                            showToast('❌ 需要列：品牌,车型,等级,类型,驱动,分类,高亮', 'error');
+                            showToast('❌ 需要列：品牌,车型,等级,类型', 'error');
                             return;
                         }
                         const carIndex = new Set();
@@ -2834,7 +2843,17 @@
                                 continue;
                             }
                             if (!validLevels.includes(level)) level = 'B';
-                            if (!validCats.includes(category)) category = '公路';
+                            // 修正：如果category不在有效列表中，但可能是带图标的，如"🏁 公路"
+                            let cleanCategory = category.replace(/^[🏁🏔️🌲🌀]\s*/, '');
+                            if (!validCats.includes(cleanCategory)) {
+                                // 尝试匹配
+                                if (category.includes('公路')) cleanCategory = '公路';
+                                else if (category.includes('拉力')) cleanCategory = '拉力';
+                                else if (category.includes('越野')) cleanCategory = '越野';
+                                else if (category.includes('漂移')) cleanCategory = '漂移';
+                                else cleanCategory = '公路';
+                            }
+                            category = cleanCategory;
                             if (!validDrives.includes(drive)) drive = '四驱';
                             const exists = selectEntries.some(e =>
                                 e.brand === brand && e.model === model &&
