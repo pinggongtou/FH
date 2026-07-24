@@ -1,0 +1,3713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🚗 车辆统计</title>
+    <style>
+        /* ===== 基础样式 ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            padding: 16px 20px 30px;
+        }
+        .app {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            background: white;
+            border-radius: 14px;
+            padding: 6px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid #e8ecf2;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 28px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #5a6a7a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover {
+            background: #f0f2f5;
+        }
+        .tab-btn.active {
+            background: #1a1a3e;
+            color: white;
+            box-shadow: 0 4px 12px rgba(26,26,62,0.25);
+        }
+        .tab-btn .badge-tab {
+            background: rgba(255,255,255,0.2);
+            padding: 0 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tab-btn.active .badge-tab {
+            background: rgba(255,255,255,0.2);
+        }
+        .tab-btn .badge-tab.colored {
+            background: #e94560;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===== 主界面 ===== */
+        header {
+            background: linear-gradient(135deg, #0f0f1f, #1a1a3e);
+            color: white;
+            padding: 20px 28px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+        }
+        header h1 {
+            font-weight: 700;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        header h1 span {
+            background: #e94560;
+            font-size: 14px;
+            padding: 2px 16px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            background: rgba(255,255,255,0.07);
+            padding: 8px 20px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+        }
+        .stats-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+        .stats-item .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(255,255,255,0.15);
+            flex-shrink: 0;
+        }
+        .stats-item .num {
+            font-weight: 700;
+            font-size: 17px;
+            margin-left: 2px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 160px;
+            padding: 10px 18px;
+            border-radius: 40px;
+            border: 2px solid #dce1e8;
+            font-size: 14px;
+            background: white;
+            transition: 0.2s;
+            outline: none;
+        }
+        .search-box:focus {
+            border-color: #1a1a3e;
+            box-shadow: 0 0 0 4px rgba(26,26,62,0.08);
+        }
+        .filter-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 2px solid #dce1e8;
+            background: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .filter-btn:hover {
+            background: #eef1f5;
+        }
+        .filter-btn.active {
+            background: #1a1a3e;
+            color: white;
+            border-color: #1a1a3e;
+        }
+        .io-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-left: 4px;
+        }
+        .io-btn {
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 2px solid #dce1e8;
+            background: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .io-btn:hover {
+            background: #eef1f5;
+        }
+        .io-btn.export-btn {
+            border-color: #48bb78;
+            color: #22543d;
+        }
+        .io-btn.export-btn:hover {
+            background: #c6f6d5;
+        }
+        .io-btn.import-btn {
+            border-color: #63b3ed;
+            color: #2a4a7a;
+        }
+        .io-btn.import-btn:hover {
+            background: #bee3f8;
+        }
+        .io-btn.add-car-btn {
+            border-color: #4299e1;
+            color: #2a4a7a;
+            background: #ebf8ff;
+        }
+        .io-btn.add-car-btn:hover {
+            background: #bee3f8;
+        }
+        #fileInput,
+        #selectFileInput {
+            display: none;
+        }
+        .rarity-legend {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .rarity-legend .label {
+            font-size: 12px;
+            color: #5a6a7a;
+            font-weight: 600;
+            margin-right: 2px;
+        }
+        .rarity-legend .legend-item {
+            font-size: 10px;
+            padding: 1px 10px;
+            border-radius: 30px;
+            font-weight: 600;
+            border: 1.5px solid transparent;
+            white-space: nowrap;
+        }
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 16px;
+        }
+        .brand-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+            border: 1px solid #e8ecf2;
+            transition: 0.15s;
+        }
+        .brand-card:hover {
+            box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+        }
+        .brand-header {
+            padding: 12px 18px;
+            background: #f7f9fc;
+            border-bottom: 1px solid #e8ecf2;
+            font-weight: 700;
+            font-size: 17px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: default;
+            user-select: none;
+        }
+        .brand-header .badge {
+            background: #e2e8f0;
+            padding: 1px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .car-list {
+            padding: 6px 10px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .car-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: 0.1s;
+            background: #fafbfc;
+            font-size: 13px;
+            gap: 6px;
+            border-left: 4px solid #dce1e8;
+            flex-wrap: wrap;
+        }
+        .car-item:hover {
+            background: #f0f2f6;
+        }
+        .car-item .name {
+            flex: 1;
+            word-break: break-word;
+            min-width: 100px;
+        }
+        .car-item .year {
+            color: #718096;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 4px;
+            white-space: nowrap;
+        }
+        .car-tags {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .tag {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 10px;
+            border-radius: 30px;
+            border: 1.5px solid transparent;
+            white-space: nowrap;
+            user-select: none;
+            letter-spacing: 0.3px;
+        }
+        .tag-status {
+            cursor: pointer;
+            transition: 0.12s;
+            font-size: 11px;
+        }
+        .tag-status:hover {
+            opacity: 0.7;
+            transform: scale(0.95);
+        }
+        .tag-status-none {
+            background: #eef1f5;
+            color: #5a6a7a;
+            border-color: #dce1e8;
+        }
+        .tag-status-collected {
+            background: #c6f6d5;
+            color: #1a5a3a;
+            border-color: #8edb9e;
+        }
+        .tag-rarity-普通 {
+            background: #d4edda;
+            color: #155724;
+            border-color: #b7dcc5;
+        }
+        .tag-rarity-稀有 {
+            background: #cce5ff;
+            color: #004085;
+            border-color: #b3d4f0;
+        }
+        .tag-rarity-史诗 {
+            background: #e8d5f5;
+            color: #4a1a6b;
+            border-color: #d4b8e8;
+        }
+        .tag-rarity-极限竞速特别版 {
+            background: #2d1b3d;
+            color: #c9a8e8;
+            border-color: #5a3a7a;
+        }
+        .tag-rarity-传奇 {
+            background: #fce4b8;
+            color: #7a4a0a;
+            border-color: #f5d48a;
+        }
+        .tag-rarity-车房宝物 {
+            background: #8a6a2a;
+            color: #f5e6b8;
+            border-color: #b8943a;
+        }
+        .empty-msg {
+            padding: 40px 20px;
+            text-align: center;
+            color: #8a9aa8;
+            font-size: 16px;
+            grid-column: 1 / -1;
+        }
+        .footer-tip {
+            margin-top: 24px;
+            text-align: center;
+            color: #8a9aa8;
+            font-size: 13px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 18px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a3e;
+            color: white;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .toast.success {
+            background: #22543d;
+        }
+        .toast.error {
+            background: #9b2c2c;
+        }
+
+        /* ===== 车辆选择页面 ===== */
+        .select-header-bar {
+            background: white;
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            border: 1px solid #e8ecf2;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .select-header-bar .left h2 {
+            font-size: 20px;
+        }
+        .select-header-bar .left .sub {
+            font-size: 13px;
+            color: #5a6a7a;
+            margin-top: 2px;
+            display: none;
+        }
+        .select-stats {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .select-stats .stat-box {
+            background: #f0f2f5;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .select-stats .stat-box span {
+            color: #e94560;
+        }
+        .select-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background: white;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid #e8ecf2;
+            margin-bottom: 16px;
+        }
+        .select-controls .label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #2d3748;
+            white-space: nowrap;
+        }
+        .select-controls .filter-select {
+            padding: 5px 12px;
+            border-radius: 30px;
+            border: 2px solid #dce1e8;
+            font-size: 12px;
+            background: white;
+            outline: none;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .select-controls .filter-select:focus {
+            border-color: #1a1a3e;
+        }
+        .select-controls .io-group-sm {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-left: 4px;
+        }
+        .select-controls .io-btn-sm {
+            padding: 4px 14px;
+            border-radius: 30px;
+            border: 2px solid #dce1e8;
+            background: white;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .select-controls .io-btn-sm:hover {
+            background: #eef1f5;
+        }
+        .select-controls .io-btn-sm.export-btn {
+            border-color: #48bb78;
+            color: #22543d;
+        }
+        .select-controls .io-btn-sm.export-btn:hover {
+            background: #c6f6d5;
+        }
+        .select-controls .io-btn-sm.import-btn {
+            border-color: #63b3ed;
+            color: #2a4a7a;
+        }
+        .select-controls .io-btn-sm.import-btn:hover {
+            background: #bee3f8;
+        }
+        .edit-toggle-btn {
+            padding: 5px 16px;
+            border-radius: 30px;
+            border: 2px solid #dce1e8;
+            background: white;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+            color: #4a5568;
+            white-space: nowrap;
+        }
+        .edit-toggle-btn:hover {
+            background: #f0f2f5;
+        }
+        .edit-toggle-btn.active {
+            background: #e94560;
+            color: white;
+            border-color: #e94560;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .category-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #e8ecf2;
+            min-width: 0;
+            transition: none;
+        }
+        .category-header {
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 15px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .category-header:hover {
+            filter: brightness(1.08);
+        }
+        .category-header .count-badge {
+            background: rgba(255,255,255,0.25);
+            padding: 0 12px;
+            border-radius: 30px;
+            font-size: 12px;
+        }
+        .category-body {
+            padding: 4px 8px 8px;
+        }
+
+        /* 扩大模式 - 窄三分之一，上下略微拉长，不影响后面四排显示 */
+        .category-card.expanded {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(56vw, 600px);
+            height: min(82vh, 720px);
+            z-index: 999;
+            grid-column: 1 / -1;
+            border-radius: 20px;
+            box-shadow: 0 30px 120px rgba(0,0,0,0.4);
+            display: flex !important;
+            flex-direction: column;
+            background: white;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.3);
+            animation: expandIn 0.25s ease-out;
+        }
+        @keyframes expandIn {
+            from {
+                transform: translate(-50%, -50%) scale(0.92);
+                opacity: 0.5;
+            }
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        .category-card.expanded .category-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 20px 20px;
+        }
+        .category-card.expanded .category-header {
+            padding: 16px 24px;
+            font-size: 22px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .category-card.expanded .level-group-title {
+            font-size: 16px;
+            padding: 6px 10px;
+            color: #2d3748;
+            font-weight: 800;
+        }
+        .category-card.expanded .select-car-item {
+            font-size: 14px;
+            padding: 6px 12px;
+            min-height: 32px;
+        }
+        .category-card.expanded .select-car-item .car-left .brand-icon {
+            font-size: 11px;
+            padding: 0 10px;
+            max-width: 80px;
+        }
+        .category-card.expanded .select-car-item .car-left .car-name {
+            font-size: 13px;
+        }
+        .category-card.expanded .select-car-item .drive-tag {
+            font-size: 10px;
+            padding: 0 8px;
+        }
+        .category-card.expanded .select-car-item .meta-tag {
+            font-size: 10px;
+            padding: 0 8px;
+        }
+        .category-card.expanded .select-car-item .action-btn {
+            font-size: 14px;
+        }
+        .category-card.expanded .select-car-item .drag-handle {
+            font-size: 16px;
+        }
+        .category-card.expanded .sub-group-title {
+            font-size: 12px;
+        }
+
+        /* 等级标题 - 扩大后更醒目 */
+        .level-group-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #1a202c;
+            padding: 3px 8px 2px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .category-card.expanded .level-group-title {
+            font-size: 16px;
+            color: #1a202c;
+            font-weight: 800;
+        }
+
+        /* 透明背景遮罩 - 仅用于点击关闭，透明不遮挡视觉 */
+        .expand-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 998;
+            cursor: default;
+        }
+        .expand-overlay.show {
+            display: block;
+        }
+
+        .level-group {
+            margin-bottom: 3px;
+        }
+        .level-group-cars {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            padding: 1px 0;
+            min-height: 16px;
+        }
+
+        /* META / Other 子分组 - 作为独立分类 */
+        .sub-group {
+            margin: 1px 0;
+        }
+        .sub-group-title {
+            font-size: 9px;
+            font-weight: 700;
+            color: #718096;
+            padding: 1px 6px 0;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .sub-group-title .sub-count {
+            font-weight: 600;
+            color: #a0aec0;
+        }
+        .sub-group-cars {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            padding: 1px 0;
+        }
+        .sub-group-cars .select-car-item {
+            padding-left: 8px;
+        }
+
+        /* ===== 车辆条目 ===== */
+        .select-car-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            background: #fafbfc;
+            gap: 3px;
+            flex-wrap: nowrap;
+            min-height: 22px;
+            transition: background 0.15s, border 0.15s;
+            border: 2px solid transparent;
+            cursor: default;
+            user-select: none;
+            border-left: 3px solid #dce1e8;
+        }
+        .select-car-item.dragging {
+            opacity: 0.5;
+            background: #e2e8f0;
+        }
+        .select-car-item.drag-over {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        /* 高亮 - 纯视觉，不影响分类 */
+        .select-car-item.highlight-red {
+            background: #fff0f0;
+            border-left-color: #e94560;
+        }
+        .select-car-item.highlight-red .car-left .brand-icon {
+            background: #fed7d7;
+            color: #9b2c2c;
+        }
+        .select-car-item.highlight-yellow {
+            background: #ffffe0;
+            border-left-color: #ecc94b;
+        }
+        .select-car-item.highlight-yellow .car-left .brand-icon {
+            background: #fefcbf;
+            color: #744210;
+        }
+
+        .select-car-item .drag-handle {
+            cursor: grab;
+            font-size: 12px;
+            color: #a0aec0;
+            flex-shrink: 0;
+            padding: 0 2px;
+            user-select: none;
+            transition: color 0.15s;
+            display: none;
+        }
+        .select-car-item .drag-handle:hover {
+            color: #4a5568;
+        }
+        .select-car-item .drag-handle.show {
+            display: block;
+        }
+        .select-car-item .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .select-car-item .car-left {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .select-car-item .car-left .brand-icon {
+            font-size: 8px;
+            font-weight: 700;
+            color: #2d3748;
+            background: #edf2f7;
+            padding: 0 5px;
+            border-radius: 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            max-width: 50px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .select-car-item .car-left .car-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1 1 auto;
+            min-width: 20px;
+            font-size: 10px;
+        }
+        .select-car-item .car-left .car-name .year-text {
+            color: #718096;
+            font-weight: 500;
+        }
+        .select-car-item .car-tags-right {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+            flex-wrap: nowrap;
+        }
+        .select-car-item .drive-tag {
+            font-size: 7px;
+            font-weight: 700;
+            padding: 0 4px;
+            border-radius: 8px;
+            white-space: nowrap;
+            display: inline-block;
+            border: 1px solid transparent;
+            flex-shrink: 0;
+        }
+        .drive-四驱 {
+            background: #c6f6d5;
+            color: #22543d;
+            border-color: #9ae6b4;
+        }
+        .drive-前驱 {
+            background: #fefcbf;
+            color: #744210;
+            border-color: #f6e05e;
+        }
+        .drive-后驱 {
+            background: #fed7d7;
+            color: #9b2c2c;
+            border-color: #feb2b2;
+        }
+
+        /* META 文字标签 */
+        .meta-tag {
+            font-size: 7px;
+            font-weight: 800;
+            padding: 0 5px;
+            border-radius: 8px;
+            white-space: nowrap;
+            display: inline-block;
+            flex-shrink: 0;
+            background: #e94560;
+            color: white;
+        }
+
+        .select-car-item .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 0 2px;
+            opacity: 0.4;
+            transition: 0.15s;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .select-car-item .action-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .select-car-item .action-btn.remove {
+            color: #e53e3e;
+        }
+        .select-car-item .action-btn.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .edit-mode .select-car-item .drag-handle {
+            display: block !important;
+        }
+        .edit-mode .select-car-item {
+            cursor: default;
+        }
+        .edit-mode .level-group-cars {
+            gap: 1px;
+        }
+
+        .cat-公路 {
+            background: #476FFD;
+        }
+        .cat-拉力 {
+            background: #ed8936;
+        }
+        .cat-越野 {
+            background: #38a169;
+        }
+        .cat-漂移 {
+            background: #9f7aea;
+        }
+
+        .empty-category {
+            padding: 20px;
+            text-align: center;
+            color: #8a9aa8;
+            font-size: 13px;
+            grid-column: 1 / -1;
+        }
+
+        /* ===== 弹窗 ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 30px;
+            max-width: 520px;
+            width: 92%;
+            max-height: 92vh;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalIn 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .modal h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+        .modal .sub {
+            color: #5a6a7a;
+            font-size: 14px;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .modal .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .modal .form-group {
+            margin-bottom: 10px;
+        }
+        .modal .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: #2d3748;
+        }
+        .modal .form-group .highlight-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .modal .form-group .highlight-options label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 2px solid #dce1e8;
+            transition: 0.15s;
+        }
+        .modal .form-group .highlight-options label:hover {
+            background: #f0f2f5;
+        }
+        .modal .form-group .highlight-options input[type="radio"] {
+            accent-color: #1a1a3e;
+        }
+        .modal .form-group select {
+            width: 100%;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 2px solid #dce1e8;
+            font-size: 14px;
+            background: white;
+            outline: none;
+        }
+        .modal .form-group select:focus {
+            border-color: #1a1a3e;
+        }
+        .modal .form-group .search-input {
+            width: 100%;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 2px solid #dce1e8;
+            font-size: 14px;
+            outline: none;
+        }
+        .modal .form-group .search-input:focus {
+            border-color: #1a1a3e;
+        }
+        .modal .form-group .drive-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .modal .form-group .drive-options label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 2px solid #dce1e8;
+            transition: 0.15s;
+        }
+        .modal .form-group .drive-options label:hover {
+            background: #f0f2f5;
+        }
+        .modal .form-group .drive-options input[type="radio"] {
+            accent-color: #1a1a3e;
+        }
+        .modal .form-group .meta-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .modal .form-group .meta-options label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 2px solid #dce1e8;
+            transition: 0.15s;
+        }
+        .modal .form-group .meta-options label:hover {
+            background: #f0f2f5;
+        }
+        .modal .form-group .meta-options input[type="radio"] {
+            accent-color: #e94560;
+        }
+        .modal .vehicle-list {
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid #e8ecf2;
+            border-radius: 8px;
+            padding: 4px 0;
+            margin-top: 4px;
+        }
+        .modal .vehicle-list .v-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 10px;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f2f5;
+            align-items: center;
+            transition: 0.1s;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .modal .vehicle-list .v-item:hover {
+            background: #f0f2f5;
+        }
+        .modal .vehicle-list .v-item .v-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 80px;
+        }
+        .modal .vehicle-list .v-item .v-left .v-brand {
+            font-size: 10px;
+            font-weight: 700;
+            color: #4a5568;
+            background: #edf2f7;
+            padding: 0 8px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+        .modal .vehicle-list .v-item .v-left .v-name {
+            word-break: break-word;
+        }
+        .modal .vehicle-list .v-item .v-add {
+            color: #4299e1;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 4px;
+            flex-shrink: 0;
+        }
+        .modal .vehicle-list .v-item .v-add:hover {
+            transform: scale(1.2);
+        }
+        .modal .vehicle-list .v-item .v-added {
+            color: #48bb78;
+            font-weight: 600;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            padding-top: 12px;
+            border-top: 1px solid #f0f2f5;
+        }
+        .modal .modal-actions button {
+            padding: 8px 24px;
+            border-radius: 30px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .modal .modal-actions .btn-cancel {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        .modal .modal-actions .btn-cancel:hover {
+            background: #e2e8f0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 1200px) {
+            .category-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 12px;
+            }
+        }
+        @media (max-width: 992px) {
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .category-header {
+                font-size: 14px;
+                padding: 6px 12px;
+            }
+        }
+        @media (max-width: 600px) {
+            .category-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            body {
+                padding: 10px 10px 20px;
+            }
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 14px;
+            }
+            .stats {
+                justify-content: space-around;
+                padding: 6px 12px;
+            }
+            .brand-grid {
+                grid-template-columns: 1fr;
+            }
+            .car-item {
+                padding: 6px 8px;
+            }
+            .rarity-legend .legend-item {
+                font-size: 9px;
+                padding: 0 8px;
+            }
+            .controls {
+                gap: 8px;
+            }
+            .io-group {
+                margin-left: 0;
+            }
+            .tab-btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            .select-controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 6px 10px;
+                gap: 4px;
+            }
+            .select-controls .label {
+                font-size: 11px;
+            }
+            .select-controls .filter-select {
+                font-size: 10px;
+                padding: 3px 8px;
+                max-width: 80px;
+            }
+            .select-controls .io-btn-sm {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            .select-header-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                padding: 10px 14px;
+            }
+            .select-stats {
+                justify-content: flex-start;
+            }
+            .modal {
+                padding: 16px 18px;
+                max-width: 100%;
+                margin: 10px;
+                max-height: 95vh;
+            }
+            .select-car-item {
+                padding: 2px 4px;
+                font-size: 10px;
+                min-height: 20px;
+            }
+            .select-car-item .car-left .brand-icon {
+                font-size: 7px;
+                max-width: 35px;
+                padding: 0 3px;
+            }
+            .select-car-item .car-left .car-name {
+                font-size: 9px;
+            }
+            .select-car-item .drive-tag {
+                font-size: 6px;
+                padding: 0 3px;
+            }
+            .select-car-item .meta-tag {
+                font-size: 6px;
+                padding: 0 3px;
+            }
+            .select-car-item .action-btn {
+                font-size: 10px;
+            }
+            .select-car-item .drag-handle {
+                font-size: 10px;
+            }
+            .category-header {
+                font-size: 13px;
+                padding: 5px 10px;
+            }
+            .level-group-title {
+                font-size: 12px;
+                padding: 3px 6px;
+            }
+            .sub-group-title {
+                font-size: 8px;
+            }
+            .edit-toggle-btn {
+                font-size: 10px;
+                padding: 3px 10px;
+            }
+            .select-stats .stat-box {
+                font-size: 12px;
+                padding: 4px 12px;
+            }
+            .category-card.expanded {
+                width: min(70vw, 95%);
+                height: min(82vh, 85%);
+                border-radius: 14px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+            .category-card.expanded .category-header {
+                font-size: 16px;
+                padding: 10px 16px;
+            }
+            .category-card.expanded .select-car-item {
+                font-size: 12px;
+                padding: 4px 8px;
+                min-height: 28px;
+            }
+            .category-card.expanded .select-car-item .car-left .brand-icon {
+                font-size: 9px;
+                max-width: 60px;
+            }
+            .category-card.expanded .select-car-item .car-left .car-name {
+                font-size: 11px;
+            }
+            .category-card.expanded .level-group-title {
+                font-size: 14px;
+                padding: 4px 8px;
+            }
+            @keyframes expandIn {
+                from {
+                    transform: translate(-50%, -50%) scale(0.92);
+                    opacity: 0.5;
+                }
+                to {
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 1;
+                }
+            }
+        }
+        @media (max-width: 420px) {
+            .category-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .select-car-item .car-left .brand-icon {
+                max-width: 25px;
+                font-size: 6px;
+            }
+            .select-car-item .car-left .car-name {
+                font-size: 8px;
+            }
+            .select-car-item .drive-tag {
+                font-size: 5px;
+                padding: 0 2px;
+            }
+            .select-car-item .meta-tag {
+                font-size: 5px;
+                padding: 0 2px;
+            }
+            .select-controls .filter-select {
+                font-size: 9px;
+                padding: 2px 6px;
+                max-width: 60px;
+            }
+            .select-controls .io-btn-sm {
+                font-size: 9px;
+                padding: 2px 6px;
+            }
+            .edit-toggle-btn {
+                font-size: 9px;
+                padding: 2px 8px;
+            }
+            .category-header {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            .level-group-title {
+                font-size: 11px;
+                padding: 2px 4px;
+            }
+            .sub-group-title {
+                font-size: 7px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Tab 导航 -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="main">📊 车辆统计</button>
+            <button class="tab-btn" data-tab="select">🎯 车辆选择 <span class="badge-tab colored" id="selectCountBadge">0</span></button>
+        </div>
+
+        <!-- ===== Tab 1: 主界面 ===== -->
+        <div class="tab-content active" id="tab-main">
+            <header>
+                <h1>🚗 车辆统计 <span id="totalCount">0</span></h1>
+                <div class="stats" id="statsBar">
+                    <span class="stats-item">
+                        <span class="dot" style="background:#eef1f5;"></span> 未收集
+                        <span class="num" id="statNone">0</span>
+                    </span>
+                    <span class="stats-item">
+                        <span class="dot" style="background:#48bb78;"></span> 已收集
+                        <span class="num" id="statCollected">0</span>
+                    </span>
+                </div>
+            </header>
+
+            <div class="controls">
+                <input class="search-box" id="searchInput" type="text" placeholder="🔍 搜索品牌或车型..." />
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="none">未收集</button>
+                    <button class="filter-btn" data-filter="collected">已收集</button>
+                </div>
+                <div class="io-group">
+                    <button class="io-btn export-btn" id="exportBtn">📤 导出表格</button>
+                    <button class="io-btn import-btn" id="importBtn">📥 导入表格</button>
+                    <input type="file" id="fileInput" accept=".csv" />
+                </div>
+                <button class="filter-btn" id="resetBtn" style="border-color:#feb2b2;color:#c53030;">重置全部</button>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center;">
+                <div class="rarity-legend">
+                    <span class="label">稀有度</span>
+                    <span class="legend-item tag-rarity-普通">普通</span>
+                    <span class="legend-item tag-rarity-稀有">稀有</span>
+                    <span class="legend-item tag-rarity-史诗">史诗</span>
+                    <span class="legend-item tag-rarity-极限竞速特别版">极限竞速特别版</span>
+                    <span class="legend-item tag-rarity-传奇">传奇</span>
+                    <span class="legend-item tag-rarity-车房宝物">车房宝物</span>
+                </div>
+                <span style="font-size:12px;color:#8a9aa8;margin-left:4px;">
+                    💡 点击「已收集/未收集」切换状态
+                </span>
+            </div>
+
+            <div id="brandContainer" class="brand-grid"></div>
+            <div class="footer-tip">
+                数据自动保存在浏览器 &nbsp;·&nbsp; 导出格式：品牌,车型,稀有度,状态
+            </div>
+        </div>
+
+        <!-- ===== Tab 2: 车辆选择 ===== -->
+        <div class="tab-content" id="tab-select">
+            <div class="select-header-bar">
+                <div class="left">
+                    <h2>🎯 车辆选择</h2>
+                    <div class="sub">按赛事类型分类 · 再按性能等级细分 · META / Other 独立分类</div>
+                </div>
+                <div class="select-stats">
+                    <span class="stat-box">总计 <span id="selectedTotal">0</span></span>
+                    <button class="io-btn add-car-btn" id="addCarFromAllBtn">➕ 添加车辆</button>
+                    <button class="edit-toggle-btn" id="editToggleBtn">✏️ 编辑</button>
+                    <button class="io-btn" id="clearAllSelect" style="border-color:#feb2b2;color:#c53030;">清空全部</button>
+                </div>
+            </div>
+
+            <div class="select-controls">
+                <span class="label">🔍 筛选：</span>
+                <select class="filter-select" id="categoryFilterSelect">
+                    <option value="all">全部类型</option>
+                    <option value="公路">🏁 公路</option>
+                    <option value="拉力">🏔️ 拉力</option>
+                    <option value="越野">🌲 越野</option>
+                    <option value="漂移">🌀 漂移</option>
+                </select>
+                <select class="filter-select" id="levelFilterSelect">
+                    <option value="all">全部等级</option>
+                    <option value="R">R 级</option>
+                    <option value="S2">S2 级</option>
+                    <option value="S1">S1 级</option>
+                    <option value="A">A 级</option>
+                    <option value="B">B 级</option>
+                    <option value="C">C 级</option>
+                    <option value="D">D 级</option>
+                </select>
+                <select class="filter-select" id="driveFilterSelect">
+                    <option value="all">全部驱动</option>
+                    <option value="四驱">🔵 四驱</option>
+                    <option value="前驱">🟡 前驱</option>
+                    <option value="后驱">🔴 后驱</option>
+                </select>
+                <select class="filter-select" id="metaFilterSelect">
+                    <option value="all">全部</option>
+                    <option value="meta">🔴 META</option>
+                    <option value="other">📋 Other</option>
+                </select>
+                <select class="filter-select" id="highlightFilterSelect">
+                    <option value="all">全部高亮</option>
+                    <option value="yellow">🟡 黄色</option>
+                    <option value="red">🔴 红色</option>
+                    <option value="none">无高亮</option>
+                </select>
+                <div class="io-group-sm">
+                    <button class="io-btn-sm export-btn" id="selectExportBtn">📤 导出</button>
+                    <button class="io-btn-sm import-btn" id="selectImportBtn">📥 导入</button>
+                    <input type="file" id="selectFileInput" accept=".csv" />
+                </div>
+                <span style="font-size:10px;color:#8a9aa8;margin-left:2px;" id="editModeHint">
+                    💡 编辑可删除/拖动/切换高亮
+                </span>
+            </div>
+
+            <div id="selectContainer" class="category-grid"></div>
+            <div class="footer-tip">
+                💡 点击分类标题可扩大查看 · 点击空白处或再次点击标题关闭 · META/Other 独立分类 · 开启「编辑」可拖动排序、删除或切换高亮
+            </div>
+        </div>
+
+        <div id="toast" class="toast"></div>
+
+        <!-- 透明遮罩 -->
+        <div class="expand-overlay" id="expandOverlay"></div>
+
+        <!-- ===== 添加车辆弹窗 ===== -->
+        <div class="modal-overlay" id="addModal">
+            <div class="modal">
+                <h3>➕ 添加车辆到选择列表</h3>
+                <div class="sub">从所有车辆中选择，指定分类、META/Other 和高亮</div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>目标分类</label>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <select id="addLevelSelect" style="flex:1;padding:8px 14px;border-radius:8px;border:2px solid #dce1e8;font-size:14px;background:white;outline:none;min-width:60px;">
+                                <option value="R">R 级</option>
+                                <option value="S2">S2 级</option>
+                                <option value="S1">S1 级</option>
+                                <option value="A">A 级</option>
+                                <option value="B" selected>B 级</option>
+                                <option value="C">C 级</option>
+                                <option value="D">D 级</option>
+                            </select>
+                            <select id="addCategorySelect" style="flex:1;padding:8px 14px;border-radius:8px;border:2px solid #dce1e8;font-size:14px;background:white;outline:none;min-width:60px;">
+                                <option value="公路">🏁 公路</option>
+                                <option value="拉力">🏔️ 拉力</option>
+                                <option value="越野">🌲 越野</option>
+                                <option value="漂移">🌀 漂移</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>驱动方式</label>
+                        <div class="drive-options">
+                            <label><input type="radio" name="drive" value="四驱" checked /> 🔵 四驱</label>
+                            <label><input type="radio" name="drive" value="前驱" /> 🟡 前驱</label>
+                            <label><input type="radio" name="drive" value="后驱" /> 🔴 后驱</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>分类（META / Other）</label>
+                        <div class="meta-options">
+                            <label><input type="radio" name="meta" value="other" checked /> 📋 Other</label>
+                            <label><input type="radio" name="meta" value="meta" /> 🔴 META</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>高亮标记（纯视觉，不影响分类）</label>
+                        <div class="highlight-options">
+                            <label><input type="radio" name="highlight" value="none" checked /> 无</label>
+                            <label><input type="radio" name="highlight" value="yellow" /> 🟡 黄色</label>
+                            <label><input type="radio" name="highlight" value="red" /> 🔴 红色</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>搜索车辆</label>
+                        <input class="search-input" id="addSearchInput" placeholder="输入品牌或车型名称..." />
+                    </div>
+                    <div class="form-group">
+                        <label>可选车辆（点击「＋」添加）</label>
+                        <div class="vehicle-list" id="addVehicleList"></div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-cancel" id="addCancelBtn">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ============================================================
+            //  完整车辆数据
+            // ============================================================
+            const CAR_DATA = [
+                { brand: "Abarth", models: [
+                        { name: "1968 595.ESSEESSE", rarity: "稀有" },
+                        { name: "1980 菲亚特.131", rarity: "稀有" },
+                        { name: "2016 695.Biposto", rarity: "史诗" },
+                        { name: "2017 124.Spider", rarity: "稀有" }
+                    ] },
+                { brand: "Alumicraft", models: [
+                        { name: "2015 Class.10.Race.Car", rarity: "稀有" },
+                        { name: "2021 #122.Class.1.Buggy", rarity: "史诗" },
+                        { name: "2022 #6165.Trick.Truck", rarity: "史诗" }
+                    ] },
+                { brand: "AMG Transport Dynamics", models: [
+                        { name: "2554 M12S.Warthog.CST", rarity: "传奇" }
+                    ] },
+                { brand: "Apollo", models: [
+                        { name: "2019 Intensa.Emozione", rarity: "传奇" }
+                    ] },
+                { brand: "Ariel", models: [
+                        { name: "2013 Atom.500.V8", rarity: "史诗" },
+                        { name: "2016 Nomad", rarity: "稀有" }
+                    ] },
+                { brand: "Austing-Healey", models: [
+                        { name: "1965 3000.MKII", rarity: "稀有" }
+                    ] },
+                { brand: "Autozam", models: [
+                        { name: "1993 AZ-1", rarity: "稀有" }
+                    ] },
+                { brand: "Bac", models: [
+                        { name: "2014 Mono", rarity: "史诗" }
+                    ] },
+                { brand: "Can-Am", models: [
+                        { name: "2018 Maverick.X.RS.Turbo.R", rarity: "稀有" }
+                    ] },
+                { brand: "Casey Currie Motorsports", models: [
+                        { name: "2019 #4402.Ultra.4'Trophy.JEEP'", rarity: "传奇" }
+                    ] },
+                { brand: "De Tomaso", models: [
+                        { name: "1984 Pantera.GT5", rarity: "传奇" }
+                    ] },
+                { brand: "DeBerti", models: [
+                        { name: "2018 Jeep.Wrangler.Unlimited", rarity: "稀有" },
+                        { name: "2018 雪佛兰.Silverado.1500.Drift.Truck", rarity: "史诗" },
+                        { name: "2019 福特.Super.Duty.F-25.Lariat'Transformer'", rarity: "史诗" },
+                        { name: "2019 丰田.Tacoma.TRD'The.Performance.Truck'", rarity: "史诗" }
+                    ] },
+                { brand: "DeLorean", models: [
+                        { name: "1982 DMC-12", rarity: "传奇" }
+                    ] },
+                { brand: "Funco.Motorsports", models: [
+                        { name: "2018 F9", rarity: "稀有" }
+                    ] },
+                { brand: "GMC", models: [
+                        { name: "1970 Jimmy", rarity: "普通" },
+                        { name: "1991 Syclone", rarity: "稀有" },
+                        { name: "1992 Typhoon", rarity: "稀有" },
+                        { name: "2020 悍马.EV.Pickup", rarity: "稀有" }
+                    ] },
+                { brand: "Gordon Murray Automotive", models: [
+                        { name: "2020 T.50", rarity: "传奇" }
+                    ] },
+                { brand: "GR", models: [
+                        { name: "2025 GT.Prototype", rarity: "传奇" }
+                    ] },
+                { brand: "Hennessey", models: [
+                        { name: "2012 Venom.GT", rarity: "传奇" },
+                        { name: "2019 福特.F-15.VelociRaptor.6X6", rarity: "史诗" },
+                        { name: "2021 Venom.F5", rarity: "传奇" }
+                    ] },
+                { brand: "HOLDEN", models: [
+                        { name: "1977 Torana.A9X", rarity: "稀有" }
+                    ] },
+                { brand: "HSV", models: [
+                        { name: "2014 Limited.Edition.Gen-F.GTS.Maloo", rarity: "史诗" },
+                        { name: "2014 GEN-F.GTS", rarity: "稀有" }
+                    ] },
+                { brand: "Jeep", models: [
+                        { name: "2012 Wrangler.Rubicon", rarity: "普通" },
+                        { name: "2016 Trailcat", rarity: "史诗" },
+                        { name: "2018 Grand.Cherokee.Trackhawk", rarity: "稀有" },
+                        { name: "2020 JT", rarity: "普通" }
+                    ] },
+                { brand: "Jimco", models: [
+                        { name: "2019 #240.Fastball.Racing.Class.6100.Spec.Trophy.Truck", rarity: "史诗" },
+                        { name: "2020 179.Hammerhead.Class.1", rarity: "史诗" }
+                    ] },
+                { brand: "KTM", models: [
+                        { name: "2018 X-Bow.GT4", rarity: "稀有" }
+                    ] },
+                { brand: "LUCID", models: [
+                        { name: "2024 Air.Sapphire", rarity: "史诗" }
+                    ] },
+                { brand: "Meyers", models: [
+                        { name: "1971 Manx", rarity: "稀有" },
+                        { name: "2023 Manx.2.0", rarity: "稀有" }
+                    ] },
+                { brand: "MG", models: [
+                        { name: "1986 Metro.6R4", rarity: "传奇" }
+                    ] },
+                { brand: "MINI", models: [
+                        { name: "1965 Cooper.S", rarity: "稀有" },
+                        { name: "2012 John.Cooper.Works.GP", rarity: "稀有" },
+                        { name: "2013 X-Raid.All4.Racing.Countryman", rarity: "史诗" },
+                        { name: "2018 X-rald.John.Cooper.Works.Buggy", rarity: "史诗" },
+                        { name: "2021 John.Cooper.Works.GP", rarity: "稀有" }
+                    ] },
+                { brand: "Noble", models: [
+                        { name: "2010 M600", rarity: "史诗" }
+                    ] },
+                { brand: "Peel", models: [
+                        { name: "1962 P50", rarity: "车房宝物" },
+                        { name: "1962 P50.Trolli.Edition", rarity: "极限竞速特别版" }
+                    ] },
+                { brand: "Penhall", models: [
+                        { name: "2011 The.Cholla", rarity: "稀有" }
+                    ] },
+                { brand: "PLYMOUTH", models: [
+                        { name: "1958 Fury", rarity: "稀有" },
+                        { name: "1968 Barracuda.Formula.S", rarity: "传奇" },
+                        { name: "1971 Cuda.426.HEMI", rarity: "传奇" }
+                    ] },
+                { brand: "Radical", models: [
+                        { name: "2015 RXC.Turbo", rarity: "稀有" }
+                    ] },
+                { brand: "Ram", models: [
+                        { name: "2024 1500.TRX", rarity: "稀有" }
+                    ] },
+                { brand: "Reliant", models: [
+                        { name: "1972 Supervan Ⅲ", rarity: "车房宝物" }
+                    ] },
+                { brand: "Rimac", models: [
+                        { name: "2021 Nevera", rarity: "传奇" }
+                    ] },
+                { brand: "RIVIAN", models: [
+                        { name: "2021 R1T", rarity: "稀有" }
+                    ] },
+                { brand: "RJ Anderson", models: [
+                        { name: "2016 #37.北极星.Pro.2.Truck", rarity: "史诗" },
+                        { name: "2021 #37.北极星.RZR.Pro.4.Truck", rarity: "史诗" }
+                    ] },
+                { brand: "Schuppan", models: [
+                        { name: "1993 962CR", rarity: "传奇" }
+                    ] },
+                { brand: "Shelby", models: [
+                        { name: "1965 COBRA.427.S/C", rarity: "传奇" },
+                        { name: "1965 Cobra.Daytona.Coupe", rarity: "传奇" }
+                    ] },
+                { brand: "SIERRA Cars", models: [
+                        { name: "2020 #23.Yokohama.ALPHA", rarity: "史诗" },
+                        { name: "2021 RX3", rarity: "稀有" },
+                        { name: "2021 700R", rarity: "稀有" }
+                    ] },
+                { brand: "SRT", models: [
+                        { name: "2013 Viper.GTS", rarity: "史诗" }
+                    ] },
+                { brand: "TVR", models: [
+                        { name: "1998 Cerbera.Speed.12", rarity: "传奇" },
+                        { name: "2005 Sagaris", rarity: "稀有" },
+                        { name: "2018 Griffith", rarity: "稀有" }
+                    ] },
+                { brand: "Ultima", models: [
+                        { name: "2015 Evolution.Coupe.1020", rarity: "传奇" }
+                    ] },
+                { brand: "Zenvo", models: [
+                        { name: "2019 TSR-S", rarity: "传奇" }
+                    ] },
+                { brand: "阿尔法罗密欧", models: [
+                        { name: "1965 Glulia.Sprint.GTA.Stradale", rarity: "传奇" },
+                        { name: "1965 Giulia.TZ2", rarity: "传奇" },
+                        { name: "1968 33.Stradale", rarity: "车房宝物" },
+                        { name: "1992 155.Q4", rarity: "稀有" },
+                        { name: "1990 SE.048SP", rarity: "史诗" },
+                        { name: "2007 8C.Competizione", rarity: "传奇" },
+                        { name: "2014 4C", rarity: "稀有" },
+                        { name: "2017 Giulia.Quadrifoglio", rarity: "稀有" },
+                        { name: "2021 Giulia.GTAm", rarity: "史诗" }
+                    ] },
+                { brand: "阿斯顿马丁", models: [
+                        { name: "1964 DB5", rarity: "传奇" },
+                        { name: "2003 DB7.GT", rarity: "稀有" },
+                        { name: "2016 Vulcan", rarity: "传奇" },
+                        { name: "2017 DB11", rarity: "稀有" },
+                        { name: "2017 Vulcan.AMR.Pro", rarity: "传奇" },
+                        { name: "2019 DBS.Superleggera", rarity: "史诗" },
+                        { name: "2019 Vantage", rarity: "稀有" },
+                        { name: "2019 Valhalla.Concept.Car", rarity: "传奇" },
+                        { name: "2021 DBX", rarity: "稀有" },
+                        { name: "2022 Valkyrie.AMR.Pro", rarity: "传奇" },
+                        { name: "2023 Valkyrie", rarity: "传奇" }
+                    ] },
+                { brand: "奥迪", models: [
+                        { name: "1983 Sport.quattro", rarity: "传奇" },
+                        { name: "1986 #2.奥迪.Sprot.quattro.S1", rarity: "传奇" },
+                        { name: "2001 RS.4.Avant", rarity: "稀有" },
+                        { name: "2003 RS.6", rarity: "稀有" },
+                        { name: "2006 RS.4", rarity: "稀有" },
+                        { name: "2009 R8.LMS", rarity: "史诗" },
+                        { name: "2009 RS.6", rarity: "稀有" },
+                        { name: "2010 TT.RS.coupé", rarity: "稀有" },
+                        { name: "2011 RS.5.Coupé", rarity: "稀有" },
+                        { name: "2011 RS.3.Sportback", rarity: "稀有" },
+                        { name: "2013 RS.4.Avant", rarity: "稀有" },
+                        { name: "2013 RS.7.Sportback", rarity: "稀有" },
+                        { name: "2013 R8.Coupé.V10.plus.5.2.FSI.quattro", rarity: "史诗" },
+                        { name: "2015 S1", rarity: "普通" },
+                        { name: "2015 RS.6.Avant", rarity: "稀有" },
+                        { name: "2016 R8.V10.plus", rarity: "史诗" },
+                        { name: "2018 RS.4.Avant", rarity: "稀有" },
+                        { name: "2020 RS.3.Sedan", rarity: "稀有" },
+                        { name: "2020 RS.V10.performance", rarity: "史诗" },
+                        { name: "2021 RS.6.Avant", rarity: "稀有" },
+                        { name: "2021 RS.7.Sportback", rarity: "稀有" },
+                        { name: "2021 RS.e-tron.GT", rarity: "稀有" },
+                        { name: "2023 R8.Coupe.V10.GT.RWD", rarity: "传奇" }
+                    ] },
+                { brand: "宝马", models: [
+                        { name: "1957 Isetta.300.Export", rarity: "车房宝物" },
+                        { name: "1973 2002.Turbo", rarity: "传奇" },
+                        { name: "1981 M1", rarity: "传奇" },
+                        { name: "1988 M3", rarity: "史诗" },
+                        { name: "1988 M5", rarity: "稀有" },
+                        { name: "1995 850CSI", rarity: "稀有" },
+                        { name: "1995 M5", rarity: "稀有" },
+                        { name: "1997 M3", rarity: "稀有" },
+                        { name: "2003 M5", rarity: "稀有" },
+                        { name: "2005 M3", rarity: "稀有" },
+                        { name: "2008 M3", rarity: "稀有" },
+                        { name: "2008 Z4.M.Coupé", rarity: "稀有" },
+                        { name: "2009 M5", rarity: "稀有" },
+                        { name: "2010 M3.GTS", rarity: "史诗" },
+                        { name: "2011 X5.M", rarity: "稀有" },
+                        { name: "2012 M5", rarity: "稀有" },
+                        { name: "2014 M4.Coupé", rarity: "稀有" },
+                        { name: "2015 i8", rarity: "史诗" },
+                        { name: "2016 M4.GTS", rarity: "史诗" },
+                        { name: "2019 Z4.Roadster", rarity: "普通" },
+                        { name: "2020 M8.Competition.Coupé", rarity: "史诗" },
+                        { name: "2020 M2.Competition.Coupé", rarity: "稀有" },
+                        { name: "2021 M4.Competition.Coupé", rarity: "稀有" },
+                        { name: "2021 M4.competition.Coupé' Welcome.Pack'", rarity: "极限竞速特别版" },
+                        { name: "2022 Ⅸ.XDRIVE50", rarity: "稀有" },
+                        { name: "2022 M5.CS", rarity: "史诗" },
+                        { name: "2023 M2.FE", rarity: "极限竞速特别版" },
+                        { name: "2023 M2", rarity: "稀有" },
+                        { name: "2024 X6.M.Competition", rarity: "稀有" }
+                    ] },
+                { brand: "保时捷", models: [
+                        { name: "1970 #3.917.LH.FE", rarity: "极限竞速特别版" },
+                        { name: "1970 #3.917.LH", rarity: "传奇" },
+                        { name: "1973 911.Cerrera.RS", rarity: "传奇" },
+                        { name: "1982 911.Turbo.3.3", rarity: "传奇" },
+                        { name: "1985 #185.959.Prodrive.Rally.Raid", rarity: "传奇" },
+                        { name: "1987 959", rarity: "传奇" },
+                        { name: "1989 944.Turbo", rarity: "稀有" },
+                        { name: "1993 968.Turbo.S", rarity: "稀有" },
+                        { name: "1993 928.GTS", rarity: "稀有" },
+                        { name: "1993 911.Turbo.S.Leichtbau", rarity: "传奇" },
+                        { name: "1995 911.GT2", rarity: "传奇" },
+                        { name: "1998 911.GT1.Strassenversion", rarity: "车房宝物" },
+                        { name: "2003 Carrera.GT", rarity: "传奇" },
+                        { name: "2004 911.GT3", rarity: "史诗" },
+                        { name: "2005 Cayman.GT3.WTAC", rarity: "史诗" },
+                        { name: "2012 911.GT3.RS.4.0", rarity: "传奇" },
+                        { name: "2014 918.Spyder", rarity: "传奇" },
+                        { name: "2018 911.GT2.RS", rarity: "传奇" },
+                        { name: "2018 718.Cayman.GTS", rarity: "稀有" },
+                        { name: "2018 Cayenne.Turbo", rarity: "稀有" },
+                        { name: "2018 Macan.LPR.Rally.Raid", rarity: "史诗" },
+                        { name: "2019 911.GT3.RS", rarity: "史诗" },
+                        { name: "2019 911.Carrera.S", rarity: "稀有" },
+                        { name: "2019 #70.保时捷.Motorsport.935", rarity: "传奇" },
+                        { name: "2020 Mission.R", rarity: "传奇" },
+                        { name: "2020 Taycan.Turbo.S", rarity: "史诗" },
+                        { name: "2021 911.GT3", rarity: "史诗" },
+                        { name: "2022 718.Cayman.GT4.RS", rarity: "史诗" },
+                        { name: "2023 911.Rallye", rarity: "稀有" },
+                        { name: "2023 911.GT3.RS", rarity: "传奇" },
+                        { name: "2023 911.Turbo.S", rarity: "史诗" }
+                    ] },
+                { brand: "北极星", models: [
+                        { name: "2021 RZR.Pro.XP.Ultimate", rarity: "稀有" },
+                        { name: "2021 RZR.Pro.XP.Factory.Racing.Limited.Edition", rarity: "史诗" }
+                    ] },
+                { brand: "本田", models: [
+                        { name: "1970 S800", rarity: "稀有" },
+                        { name: "1972 Z.GT", rarity: "普通" },
+                        { name: "1974 Civic.RS", rarity: "普通" },
+                        { name: "1984 Civic.CRX.Mugen", rarity: "稀有" },
+                        { name: "1984 City.E.Ⅱ", rarity: "稀有" },
+                        { name: "1986 Civic.Si", rarity: "普通" },
+                        { name: "1990 #19.101.Motorsport.CRX.WTAC", rarity: "史诗" },
+                        { name: "1991 CR-X.SIR", rarity: "稀有" },
+                        { name: "1991 Beat", rarity: "稀有" },
+                        { name: "1992 NSX-R", rarity: "传奇" },
+                        { name: "1992 #21.Hardrace/JDMyard.Civic.WTAC", rarity: "史诗" },
+                        { name: "1994 Prelude.Si", rarity: "普通" },
+                        { name: "1994 Acty", rarity: "普通" },
+                        { name: "1997 Civic.Type.R", rarity: "稀有" },
+                        { name: "2001 #33.Integra.WTAC", rarity: "史诗" },
+                        { name: "2003 S2000", rarity: "稀有" },
+                        { name: "2004 Civic.Type.R", rarity: "稀有" },
+                        { name: "2004 #52.Evasive.Motorsports.S2000.WTAC", rarity: "史诗" },
+                        { name: "2005 NSX-R", rarity: "传奇" },
+                        { name: "2005 MSX-R.GT", rarity: "史诗" },
+                        { name: "2007 Civic.Type.R", rarity: "稀有" },
+                        { name: "2008 Civic.Type.R", rarity: "稀有" },
+                        { name: "2015 Ridgeline.Baja.Trophy.Truck", rarity: "史诗" },
+                        { name: "2015 Civic.Type.R", rarity: "稀有" },
+                        { name: "2018 Civic.Type.R", rarity: "稀有" },
+                        { name: "2022 e", rarity: "普通" },
+                        { name: "2023 Civic.Type.R", rarity: "稀有" }
+                    ] },
+                { brand: "标致", models: [
+                        { name: "1984 205.Turbo.16", rarity: "传奇" },
+                        { name: "1991 205.Rallye", rarity: "稀有" },
+                        { name: "2007 Super.2000", rarity: "稀有" }
+                    ] },
+                { brand: "别克", models: [
+                        { name: "1987 Regal.GNX", rarity: "传奇" }
+                    ] },
+                { brand: "宾利", models: [
+                        { name: "2016 Bentayga", rarity: "稀有" },
+                        { name: "2021 Continental.GT.Convertible", rarity: "史诗" }
+                    ] },
+                { brand: "达特桑", models: [
+                        { name: "1969 2000.Roadster", rarity: "稀有" },
+                        { name: "1970 510", rarity: "稀有" },
+                        { name: "1972 #269.Attacking.the.Clock.Racing.240Z'All.Carbon.Hill.Climb.Beast'", rarity: "史诗" }
+                    ] },
+                { brand: "大众", models: [
+                        { name: "1963 Beetle", rarity: "普通" },
+                        { name: "1963 Type.2.De.Luxe", rarity: "稀有" },
+                        { name: "1969 Class.5/1600.Baja.Bug", rarity: "稀有" },
+                        { name: "1982 Pickup.LX", rarity: "普通" },
+                        { name: "1983 Golf.GTI", rarity: "稀有" },
+                        { name: "1989 Rallye.Golf", rarity: "稀有" },
+                        { name: "1992 Golf.GTi.16v.Mk2", rarity: "普通" },
+                        { name: "1995 Corrado.VR6", rarity: "稀有" },
+                        { name: "2010 Golf.R", rarity: "稀有" },
+                        { name: "2011 Scirocco.R", rarity: "稀有" },
+                        { name: "2014 Golf.R", rarity: "稀有" },
+                        { name: "2017 #34.Andretti.Rally.Cross.Beetle", rarity: "史诗" },
+                        { name: "2021 Golf.R", rarity: "稀有" },
+                        { name: "2022 Golf.R", rarity: "稀有" }
+                    ] },
+                { brand: "道奇", models: [
+                        { name: "1968 Dart.HEMI.Super.Stock", rarity: "传奇" },
+                        { name: "1969 Charger.Daytona.HEMI", rarity: "传奇" },
+                        { name: "1969 Charger.R/T", rarity: "传奇" },
+                        { name: "1970 Coronet.Super.Bee", rarity: "传奇" },
+                        { name: "1970 Challenger R/T", rarity: "传奇" },
+                        { name: "1999 Viper.GTS.ACR", rarity: "史诗" },
+                        { name: "1999 Viper.GTS.ACR.FE", rarity: "极限竞速特别版" },
+                        { name: "2006 Ram.SRT-10", rarity: "稀有" },
+                        { name: "2008 Viper.SRT-10.ACR", rarity: "史诗" },
+                        { name: "2015 Challenger.SRT.Hellcat", rarity: "史诗" },
+                        { name: "2015 Charger.SRT.hellcat", rarity: "史诗" },
+                        { name: "2016 Viper.ACR", rarity: "传奇" },
+                        { name: "2018 Challenger.SRT.Demon", rarity: "传奇" },
+                        { name: "2021 Durango.SRT.Hellcat", rarity: "稀有" },
+                        { name: "2022 Challenger.SRT.Super.Stock", rarity: "史诗" }
+                    ] },
+                { brand: "法拉利", models: [
+                        { name: "1962 250.GT.Berlinetta.Lusso", rarity: "车房宝物" },
+                        { name: "1962 250.GTO", rarity: "车房宝物" },
+                        { name: "1967 #24 法拉利.Spa.330.P4", rarity: "传奇" },
+                        { name: "1967 275.GTB4.Spider", rarity: "传奇" },
+                        { name: "1969 Dino.246.GT", rarity: "传奇" },
+                        { name: "1970 512.S", rarity: "传奇" },
+                        { name: "1984 288.GTO", rarity: "传奇" },
+                        { name: "1987 F40", rarity: "传奇" },
+                        { name: "1989 F40.Competizione", rarity: "传奇" },
+                        { name: "1992 512.TR", rarity: "稀有" },
+                        { name: "1994 F355.Berlinetta", rarity: "传奇" },
+                        { name: "1995 F50", rarity: "传奇" },
+                        { name: "1996 F50.GT", rarity: "传奇" },
+                        { name: "2002 Enzo", rarity: "传奇" },
+                        { name: "2005 FXX", rarity: "传奇" },
+                        { name: "2007 430.Scuderia", rarity: "传奇" },
+                        { name: "2009 458.Italia", rarity: "传奇" },
+                        { name: "2010 599XX", rarity: "传奇" },
+                        { name: "2012 599XX.Evolution", rarity: "传奇" },
+                        { name: "2013 Laferrari", rarity: "传奇" },
+                        { name: "2013 458.Speciale", rarity: "史诗" },
+                        { name: "2014 FXX.K", rarity: "传奇" },
+                        { name: "2015 488.GTB", rarity: "史诗" },
+                        { name: "2015 F12tdf", rarity: "传奇" },
+                        { name: "2017 J50", rarity: "史诗" },
+                        { name: "2017 812.Superfast", rarity: "史诗" },
+                        { name: "2017 J50.Preorder.Car", rarity: "极限竞速特别版" },
+                        { name: "2018 FXX-K.Evo", rarity: "传奇" },
+                        { name: "2018 Portofino", rarity: "稀有" },
+                        { name: "2018 FXX-K.Evo'Welcome.Pack'", rarity: "极限竞速特别版" },
+                        { name: "2019 蒙扎.SP2", rarity: "传奇" },
+                        { name: "2019 F8.Tributo", rarity: "史诗" },
+                        { name: "2019 488.Pista", rarity: "传奇" },
+                        { name: "2020 SF90.Stradale", rarity: "史诗" },
+                        { name: "2020 Roma", rarity: "稀有" },
+                        { name: "2022 296.GTB", rarity: "史诗" },
+                        { name: "2025 F80", rarity: "传奇" }
+                    ] },
+                { brand: "丰田", models: [
+                        { name: "1965 Sports.800", rarity: "稀有" },
+                        { name: "1965 Sports.800 芬达特别版", rarity: "稀有" },
+                        { name: "1969 2000GT", rarity: "传奇" },
+                        { name: "1974 Corolla.SR5", rarity: "普通" },
+                        { name: "1979 FJ40", rarity: "稀有" },
+                        { name: "1985 Sprinter.Trueno.GT-APEX.FE", rarity: "极限竞速特别版" },
+                        { name: "1985 Sprinter.Trueno.GT.Apex", rarity: "传奇" },
+                        { name: "1989 MR2.SC", rarity: "稀有" },
+                        { name: "1991 Sera", rarity: "稀有" },
+                        { name: "1991 Chaser.GT.Twin.Turbo", rarity: "稀有" },
+                        { name: "1992 Celica.GT.Four.RC.ST185", rarity: "稀有" },
+                        { name: "1992 Supra.2.0.GT", rarity: "稀有" },
+                        { name: "1993 #1.T100.Baja.Truck", rarity: "史诗" },
+                        { name: "1994 Celica.GT-Four.ST205", rarity: "稀有" },
+                        { name: "1995 MR2.GT", rarity: "稀有" },
+                        { name: "1995 J&J.Motorsport.Supra.WTAC", rarity: "史诗" },
+                        { name: "1996 Starlet.Glanza.V", rarity: "稀有" },
+                        { name: "1997 Soarer.2.5.GT-T", rarity: "稀有" },
+                        { name: "1997 Chaser.2.5.Tourer.V", rarity: "稀有" },
+                        { name: "1998 Supra RZ", rarity: "传奇" },
+                        { name: "1999 Altezza.RS200.Z.EDITION", rarity: "稀有" },
+                        { name: "2003 Celica.Sport.Specialty.Ⅱ", rarity: "稀有" },
+                        { name: "2005 Crown.Super.Deluxe.Taxi", rarity: "普通" },
+                        { name: "2013 86", rarity: "稀有" },
+                        { name: "2013 86.'Stories'", rarity: "稀有" },
+                        { name: "2016 Land.Cruiser.Arctic.Trucks.AT37", rarity: "史诗" },
+                        { name: "2017 JPN.Taxi", rarity: "普通" },
+                        { name: "2019 Tacoma.TRD.Pro.FE", rarity: "极限竞速特别版" },
+                        { name: "2019 Tacoma.TRD.Pro", rarity: "稀有" },
+                        { name: "2019 4Runner.TRD.Pro", rarity: "稀有" },
+                        { name: "2020 GR.Supra", rarity: "史诗" },
+                        { name: "2021 GR.Yaris", rarity: "稀有" },
+                        { name: "2022 GR86", rarity: "稀有" },
+                        { name: "2023 GR.Corolla", rarity: "稀有" },
+                        { name: "2023 Camry.TRD", rarity: "稀有" },
+                        { name: "2024 Prius.Prime.XSE.Premium", rarity: "普通" },
+                        { name: "2025 Land.Cruiser", rarity: "稀有" }
+                    ] },
+                { brand: "福特", models: [
+                        { name: "1932 De.Luxe.Five-Window.Coupe", rarity: "车房宝物" },
+                        { name: "1965 Mustang.GT.Coupe", rarity: "传奇" },
+                        { name: "1966 #2.GT40.Mk.Ⅱ", rarity: "传奇" },
+                        { name: "1968 Mustang.GT.2+2.Fastbck.", rarity: "传奇" },
+                        { name: "1968 Mustang.GT.2+2.Fastbck.FE", rarity: "极限竞速特别版" },
+                        { name: "1969 Mustang.Boss.302", rarity: "传奇" },
+                        { name: "1973 Capri.RS3100", rarity: "稀有" },
+                        { name: "1973 XB.Falcon.GT", rarity: "传奇" },
+                        { name: "1977 #5.Escort.RS1800.Mkll", rarity: "传奇" },
+                        { name: "1985 RS200.Evolution", rarity: "传奇" },
+                        { name: "1986 F-150.XLT.Lariat.FE", rarity: "极限竞速特别版" },
+                        { name: "1986 F-150.XLT.Lariat", rarity: "普通" },
+                        { name: "1987 Slerra.Cosworth.RS500", rarity: "传奇" },
+                        { name: "1992 Escort.RS.Cosworth", rarity: "稀有" },
+                        { name: "1993 Mustang.SVT.Cobra.R", rarity: "史诗" },
+                        { name: "1994 Supervan 3", rarity: "史诗" },
+                        { name: "1999 Racing.puma", rarity: "稀有" },
+                        { name: "2000 Mustang.SVT.Cobra.R", rarity: "史诗" },
+                        { name: "2001 #4.福特.Focus.RS", rarity: "史诗" },
+                        { name: "2003 Focus.RS", rarity: "稀有" },
+                        { name: "2003 F-150.SVT.Lightning", rarity: "稀有" },
+                        { name: "2005 GT", rarity: "传奇" },
+                        { name: "2009 Focus.RS", rarity: "稀有" },
+                        { name: "2010 Crown.Victoria.Police.Interceptor", rarity: "普通" },
+                        { name: "2011 Transit.SuperSportVan", rarity: "稀有" },
+                        { name: "2013 Mustang.Shelby.GT500", rarity: "史诗" },
+                        { name: "2014 Ranger.T6.Rally.Raid", rarity: "史诗" },
+                        { name: "2014 #11.Rockstar.F-150.Trophy.Truck", rarity: "传奇" },
+                        { name: "2014 FPV.Limited.Edition.Pursuit.Ute", rarity: "稀有" },
+                        { name: "2016 Mustang.Shelby.GT350R", rarity: "传奇" },
+                        { name: "2017 GT", rarity: "传奇" },
+                        { name: "2017 M-Sport.Fiesta.RS", rarity: "稀有" },
+                        { name: "2017 Focus.RS", rarity: "稀有" },
+                        { name: "2017 #14.Rahal.Letterman.Lanigan.Racin.Fiesta", rarity: "史诗" },
+                        { name: "2017 #25.'Brocky'.Ultra4.Bronco.RTR", rarity: "史诗" },
+                        { name: "2018 Mustang.RTR.Spec.5", rarity: "史诗" },
+                        { name: "2020 Mustang.Shelby.GT500", rarity: "传奇" },
+                        { name: "2020 #2069.福特.Performance.Bronco.R", rarity: "传奇" },
+                        { name: "2020 Super.Duty.F-450.DRW.PLATINUM.FE", rarity: "极限竞速特别版" },
+                        { name: "2020 Super.Duty.F-450.DRW.PLATINUM", rarity: "普通" },
+                        { name: "2020 Supervan.4", rarity: "传奇" },
+                        { name: "2022 Bronco.Raptor", rarity: "稀有" },
+                        { name: "2022 F-150.Lightning", rarity: "稀有" },
+                        { name: "2022 Focus.ST", rarity: "普通" },
+                        { name: "2023 F-150.Raptor.R.'Welcome.Pack'", rarity: "极限竞速特别版" },
+                        { name: "2023 Flesta.ST", rarity: "普通" },
+                        { name: "2023 F-150.Raptor.R", rarity: "史诗" },
+                        { name: "2024 Mustang.Dark.Horse", rarity: "史诗" },
+                        { name: "2024 Mustang.GT", rarity: "稀有" }
+                    ] },
+                { brand: "捷豹", models: [
+                        { name: "1956 D-Type", rarity: "传奇" },
+                        { name: "1961 E-type", rarity: "传奇" },
+                        { name: "1964 Lightweight.E-Type", rarity: "传奇" },
+                        { name: "1991 Sport.XJR-15", rarity: "传奇" },
+                        { name: "1993 XJ220", rarity: "传奇" },
+                        { name: "1993 XJ220S.TWR", rarity: "传奇" },
+                        { name: "2010 C-X75", rarity: "传奇" }
+                    ] },
+                { brand: "凯迪拉克", models: [
+                        { name: "2013 XTS.Limousine", rarity: "普通" },
+                        { name: "2016 CTS-V.Sedan", rarity: "稀有" },
+                        { name: "2016 ATS-V", rarity: "稀有" },
+                        { name: "2022 CT4-V.Blackwing", rarity: "史诗" },
+                        { name: "2022 CT5-V.Blackwing", rarity: "史诗" }
+                    ] },
+                { brand: "柯尼塞格", models: [
+                        { name: "2008 CCGT", rarity: "传奇" },
+                        { name: "2011 Agera", rarity: "传奇" },
+                        { name: "2015 One:1", rarity: "传奇" },
+                        { name: "2016 Regera", rarity: "传奇" },
+                        { name: "2017 Agera.RS", rarity: "传奇" },
+                        { name: "2020 Jesko", rarity: "传奇" },
+                        { name: "2024 Gemera", rarity: "传奇" }
+                    ] },
+                { brand: "兰博基尼", models: [
+                        { name: "1967 Miura.P400", rarity: "车房宝物" },
+                        { name: "1988 Countach.LP5000.QV", rarity: "传奇" },
+                        { name: "1997 Diablo.SV", rarity: "传奇" },
+                        { name: "1999 Diablo.GTR", rarity: "传奇" },
+                        { name: "2010 Murciélago.LP.670-4.SV", rarity: "传奇" },
+                        { name: "2011 Sesto.Elemento", rarity: "传奇" },
+                        { name: "2012 Aventador.LP700-4", rarity: "传奇" },
+                        { name: "2012 Gallardo.LP570-4.Spyder.Performante", rarity: "史诗" },
+                        { name: "2013 Veneno", rarity: "传奇" },
+                        { name: "2014 Huracán.LP.610-4", rarity: "史诗" },
+                        { name: "2016 Centenario.LP.770-4", rarity: "传奇" },
+                        { name: "2018 Aventador.SVJ", rarity: "传奇" },
+                        { name: "2019 Urus", rarity: "稀有" },
+                        { name: "2020 Huracán.STO", rarity: "传奇" },
+                        { name: "2020 Sián.Roadster", rarity: "传奇" },
+                        { name: "2020 Essenza.SCV12", rarity: "传奇" },
+                        { name: "2020 Huracán.EVO", rarity: "史诗" },
+                        { name: "2021 Aventador.LP.780-4.Ultimae", rarity: "传奇" },
+                        { name: "2021 Countach.LPI.800-4", rarity: "传奇" },
+                        { name: "2022 Huracán.Tecnica", rarity: "史诗" },
+                        { name: "2022 Huracán.EVO.Spyder", rarity: "稀有" },
+                        { name: "2023 Huracán.Sterrato", rarity: "史诗" },
+                        { name: "2024 Temerario", rarity: "传奇" },
+                        { name: "2024 Revuelto", rarity: "传奇" }
+                    ] },
+                { brand: "蓝旗亚", models: [
+                        { name: "1974 Stratos.HF.Stradale", rarity: "传奇" },
+                        { name: "1982 037.Stradale", rarity: "史诗" },
+                        { name: "1986 Delta.S4", rarity: "传奇" },
+                        { name: "1992 Delta.HF.Integrale.EVO", rarity: "传奇" }
+                    ] },
+                { brand: "雷克萨斯", models: [
+                        { name: "2010 LFA.FE", rarity: "极限竞速特别版" },
+                        { name: "2010 LFA", rarity: "传奇" },
+                        { name: "2015 RC.F", rarity: "稀有" },
+                        { name: "2021 LC.500", rarity: "稀有" }
+                    ] },
+                { brand: "雷诺", models: [
+                        { name: "1967 8.Gordini", rarity: "稀有" },
+                        { name: "1980 5.Turbo", rarity: "传奇" },
+                        { name: "1993 Clio.Williams", rarity: "稀有" },
+                        { name: "2008 Mégane.R26.R", rarity: "稀有" },
+                        { name: "2010 Megane.RS.250", rarity: "稀有" },
+                        { name: "2018 Megane.R.S.", rarity: "稀有" }
+                    ] },
+                { brand: "莲花", models: [
+                        { name: "1997 Elise.GT1", rarity: "传奇" },
+                        { name: "1999 Elise.Series.1.Sport.190", rarity: "稀有" },
+                        { name: "2018 Scura.Motorsports.Exige.WTAC", rarity: "史诗" },
+                        { name: "2018 Exige.Cup.430", rarity: "史诗" },
+                        { name: "2020 Evija.FE", rarity: "极限竞速特别版" },
+                        { name: "2020 Evija", rarity: "传奇" },
+                        { name: "2023 Emira", rarity: "稀有" }
+                    ] },
+                { brand: "林肯", models: [
+                        { name: "1962 Continental", rarity: "稀有" }
+                    ] },
+                { brand: "路虎", models: [
+                        { name: "2015 Range.Rover.Sport.SVR", rarity: "稀有" },
+                        { name: "2020 Defender.110.X", rarity: "稀有" }
+                    ] },
+                { brand: "马自达", models: [
+                        { name: "1972 Cosmo.110S.Series.Ⅱ", rarity: "史诗" }, 
+                        { name: "1973 RX-3.FE", rarity: "极限竞速特别版" },
+                        { name: "1973 RX-3", rarity: "传奇" },
+                        { name: "1974 #123.Mad.Mike.808.Wagon.'FURSTY'", rarity: "传奇" },
+                        { name: "1985 RX-7.GSL-SE", rarity: "稀有" },
+                        { name: "1990 Savanna.RX-7", rarity: "传奇" },
+                        { name: "1991 #55.马自达.787B", rarity: "传奇" },
+                        { name: "1992 RX-7.Type.S", rarity: "传奇" },
+                        { name: "1994 MX-5.Miata.FE", rarity: "极限竞速特别版" },
+                        { name: "1994 MX-5.Miata", rarity: "稀有" },
+                        { name: "2005 Mazdaspeed.MX-5", rarity: "稀有" },
+                        { name: "2008 Furai", rarity: "传奇" },
+                        { name: "2010 Mazdaspeed.3", rarity: "普通" },
+                        { name: "2011 RX-8.R3", rarity: "稀有" },
+                        { name: "2013 MX-5", rarity: "普通" },
+                        { name: "2016 MX-5", rarity: "普通" },
+                        { name: "2017 MX-5.Cup", rarity: "稀有" },
+                        { name: "2022 MX-5.Miata.RF", rarity: "稀有" }
+                    ] },
+                { brand: "玛莎拉蒂", models: [
+                        { name: "1997 Ghibli.Cup", rarity: "稀有" },
+                        { name: "2004 MC12", rarity: "传奇" },
+                        { name: "2008 MC12.Versione.Corsa", rarity: "传奇" },
+                        { name: "2022 MC20", rarity: "史诗" }
+                    ] },
+                { brand: "迈凯伦", models: [
+                        { name: "1993 F1", rarity: "传奇" },
+                        { name: "1997 F1.GT", rarity: "传奇" },
+                        { name: "2011 12C.Coupé", rarity: "史诗" },
+                        { name: "2013 P1", rarity: "传奇" },
+                        { name: "2014 650S.Spider", rarity: "史诗" },
+                        { name: "2015 570S.Coupé", rarity: "史诗" },
+                        { name: "2018 600LT.Coupé", rarity: "史诗" },
+                        { name: "2019 Speedtail", rarity: "传奇" },
+                        { name: "2021 Sabre", rarity: "传奇" },
+                        { name: "2021 620R", rarity: "史诗" },
+                        { name: "2021 765LT.Coupé", rarity: "传奇" },
+                        { name: "2023 Artura", rarity: "史诗" }
+                    ] },
+                { brand: "梅赛德斯-AMG", models: [
+                        { name: "2015 GT.S", rarity: "史诗" },
+                        { name: "2016 C.63.S.Coupé", rarity: "稀有" },
+                        { name: "2017 GT.R", rarity: "传奇" },
+                        { name: "2018 GT.4-Door.Coupé", rarity: "史诗" },
+                        { name: "2018 E.63.S", rarity: "稀有" },
+                        { name: "2020 GT.Black.Series.'Welcome.Pack'", rarity: "极限竞速特别版" },
+                        { name: "2020 SLC.43.Final.Edition", rarity: "稀有" },
+                        { name: "2021 梅赛德斯-AMG.ONE", rarity: "传奇" },
+                        { name: "2021 GT.Black.Series", rarity: "传奇" },
+                        { name: "2021 SL.63", rarity: "史诗" }
+                    ] },
+                { brand: "梅赛德斯-奔驰", models: [
+                        { name: "1954 300.SL.Coupé", rarity: "传奇" },
+                        { name: "1955 300.SLR", rarity: "车房宝物" },
+                        { name: "1987 AMG.Hammer.Coupe", rarity: "传奇" },
+                        { name: "1990 190.E.2.5-16.Evolution.Ⅱ.FE", rarity: "极限竞速特别版" },
+                        { name: "1990 190.E.2.5-16.Evolution.Ⅱ", rarity: "传奇" },
+                        { name: "1998 AMG.CLK.GTR", rarity: "传奇" },
+                        { name: "2009 SL.65.AMG.Black.Series", rarity: "传奇" },
+                        { name: "2012 C.63.AMG.Coupé.Black.Serles", rarity: "史诗" },
+                        { name: "2013 G.65.AMG", rarity: "史诗" },
+                        { name: "2013 A.45.AMG", rarity: "稀有" },
+                        { name: "2014 Unimog.U5023", rarity: "稀有" },
+                        { name: "2014 G.63.AMG.6x6", rarity: "传奇" },
+                        { name: "2018 X-Class", rarity: "普通" }
+                    ] },
+                { brand: "讴歌", models: [
+                        { name: "2001 Integra.Type.R", rarity: "稀有" },
+                        { name: "2002 RSX.Type.S", rarity: "稀有" },
+                        { name: "2022 NSX.Type.S", rarity: "史诗" },
+                        { name: "2023 Integra.A-Spec", rarity: "普通" }
+                    ] },
+                { brand: "欧宝", models: [
+                        { name: "1984 Manta.400", rarity: "稀有" }
+                    ] },
+                { brand: "帕加尼", models: [
+                        { name: "2009 Zonda.R", rarity: "传奇" },
+                        { name: "2010 Zonda.Cinque.Roadster", rarity: "传奇" },
+                        { name: "2016 Huayra.BC.Coupe", rarity: "传奇" },
+                        { name: "2021 Huayra.R", rarity: "传奇" }
+                    ] },
+                { brand: "庞蒂亚克", models: [
+                        { name: "1977 Firebird.Trans.AM", rarity: "传奇" },
+                        { name: "1987 Firebird.Trans.Am.GTA", rarity: "稀有" }
+                    ] },
+                { brand: "漂移方程式", models: [
+                        { name: "1989 #98.宝马.325i", rarity: "史诗" },
+                        { name: "1995 #34.丰田.Supra.MklV", rarity: "传奇" },
+                        { name: "1997 #777.日产.240SX", rarity: "史诗" },
+                        { name: "2006 #43.道奇.Viper.SRT-10.ACR", rarity: "传奇" },
+                        { name: "2007 #117.599.GTB.Fiorano", rarity: "史诗" },
+                        { name: "2009 #99.马自达.RX-8", rarity: "史诗" },
+                        { name: "2013 #777.雪佛兰.Corvette", rarity: "史诗" },
+                        { name: "2015 #13.福特.Mustang", rarity: "史诗" },
+                        { name: "2016 #530.HSV.Maloo.GEN-F", rarity: "史诗" },
+                        { name: "2019 #411.丰田.Corlla.Hatchback", rarity: "稀有" },
+                        { name: "2020 #91.宝马.M2", rarity: "史诗" },
+                        { name: "2020 #151.丰田.GR.Supra", rarity: "史诗" },
+                        { name: "2023 #64.Forsberg.Racing.日产.Z", rarity: "史诗" }
+                    ] },
+                { brand: "日产", models: [
+                        { name: "1969 Fairlady.Z.432", rarity: "传奇" },
+                        { name: "1971 Skyline.2000GT-R", rarity: "传奇" },
+                        { name: "1972 Patrol", rarity: "普通" },
+                        { name: "1973 Skyline.H/T.2000GT-R", rarity: "传奇" },
+                        { name: "1983 #11.Tomica.Skyline.Turbo.Super.Silhouette", rarity: "传奇" },
+                        { name: "1985 Safari.Turbo", rarity: "稀有" },
+                        { name: "1987 Be-1", rarity: "稀有" },
+                        { name: "1987 Skyline.GTS.R", rarity: "稀有" },
+                        { name: "1989 S-Cargo.FE", rarity: "极限竞速特别版" },
+                        { name: "1989 Silvia.K's", rarity: "稀有" },
+                        { name: "1989 PAO", rarity: "稀有" },
+                        { name: "1989 S-Cargo", rarity: "普通" },
+                        { name: "1990 Pulsar.GTI-R", rarity: "稀有" },
+                        { name: "1990 #12.Skyline.GT-R(BNR32.Gr.A)JTC", rarity: "传奇" },
+                        { name: "1991 Figaro", rarity: "稀有" },
+                        { name: "1992 Skyline.GT-R", rarity: "传奇" },
+                        { name: "1993 #32.Skyline.WTAC.'Xtreme.GTR'", rarity: "传奇" },
+                        { name: "1993 240SX", rarity: "稀有" },
+                        { name: "1994 Fairlady.Z.Version.S.Twin.Turbo", rarity: "稀有" },
+                        { name: "1994 Silvia.K's", rarity: "稀有" },
+                        { name: "1995 Gloria.Gran.Turismo", rarity: "普通" },
+                        { name: "1995 NISMO.GT-R.LM", rarity: "传奇" },
+                        { name: "1997 Stagea.RS.FOUR.V", rarity: "稀有" },
+                        { name: "1997 Skyline.GT-R.V-spec", rarity: "传奇" },
+                        { name: "1998 Silvia.K's.Aero", rarity: "稀有" },
+                        { name: "1998 Skyline.GT-R.40周年纪念版", rarity: "传奇" },
+                        { name: "1998 R390(GT1)", rarity: "传奇" },
+                        { name: "1998 #23.Pennzoil.NISMO.Skyline.GT-R", rarity: "传奇" },
+                        { name: "2000 #36.Dream.Project.S15.Silvia.WTAC", rarity: "史诗" },
+                        { name: "2000 Skyline.GT-R.V·spec.Ⅱ", rarity: "传奇" },
+                        { name: "2002 Silvia.Spec-R", rarity: "稀有" },
+                        { name: "2003 Fairlady.Z", rarity: "稀有" },
+                        { name: "2010 370Z", rarity: "稀有" },
+                        { name: "2012 GT-R.Black.Edition(R35)FE", rarity: "极限竞速特别版" },
+                        { name: "2012 GT-R.Black.Edition(R35)", rarity: "传奇" },
+                        { name: "2017 GT-R(R35)", rarity: "传奇" },
+                        { name: "2019 370Z.Nismo", rarity: "史诗" },
+                        { name: "2020 GT-R.NISMO(35)", rarity: "传奇" },
+                        { name: "2024 Z.NISMO", rarity: "史诗" },
+                        { name: "2024 GT-R.NISMO", rarity: "传奇" }
+                    ] },
+                { brand: "赛麟", models: [
+                        { name: "2017 S7.LM", rarity: "传奇" }
+                    ] },
+                { brand: "三菱", models: [
+                        { name: "1990 #269.Attacking.the.Clock.Racing.Minicab.Time.Attack", rarity: "史诗" },
+                        { name: "1992 Galant.VR-4", rarity: "稀有" },
+                        { name: "1995 Montero.Exceed.2800.TD", rarity: "普通" },
+                        { name: "1995 Eclipse.GSX", rarity: "稀有" },
+                        { name: "1995 Lancer.Evolution.Ⅲ.GSR", rarity: "传奇" },
+                        { name: "1997 Montero.Evolution", rarity: "稀有" },
+                        { name: "1997 GTO", rarity: "稀有" },
+                        { name: "2001 Lancer.Evolution.Ⅵ.GSR.TM.Editon", rarity: "史诗" },
+                        { name: "2004 Lancer.Evolution.Ⅷ.MR", rarity: "史诗" },
+                        { name: "2004 Lancer.Evolution.Ⅷ.MR'Welcome.Pack'", rarity: "极限竞速特别版" },
+                        { name: "2005 #1.Slerra.Sierra.Enterprises.Lancer.Evolution.Time.Attack", rarity: "史诗" },
+                        { name: "2006 Lancer.Evolution.Ⅸ.MR", rarity: "史诗" },
+                        { name: "2008 Lancer.Evolution.X.GSR", rarity: "稀有" }
+                    ] },
+                { brand: "斯巴鲁", models: [
+                        { name: "1980 BRAT.GL", rarity: "普通" },
+                        { name: "1990 LEGACY.RS", rarity: "稀有" },
+                        { name: "1994 Vivio.RX-R", rarity: "稀有" },
+                        { name: "1994 Vivio.RX-R.FE", rarity: "极限竞速特别版" },
+                        { name: "1996 SVX", rarity: "稀有" },
+                        { name: "1998 Impreza.22B-STi.Version", rarity: "传奇" },
+                        { name: "2004 IMPREZA.WRX.STi", rarity: "稀有" },
+                        { name: "2005 LEGACY.B4.2.0.GT", rarity: "稀有" },
+                        { name: "2005 IMPREZA.WRX.STi", rarity: "稀有" },
+                        { name: "2008 IMPREZA.WRX.STi", rarity: "稀有" },
+                        { name: "2011 WRX.STI", rarity: "稀有" },
+                        { name: "2013 BRZ", rarity: "稀有" },
+                        { name: "2015 WRX.STI", rarity: "稀有" },
+                        { name: "2018 WRX.STI.ARX.Supercar", rarity: "史诗" },
+                        { name: "2019 STI.S209", rarity: "史诗" },
+                        { name: "2022 BRZ.FE", rarity: "极限竞速特别版" },
+                        { name: "2022 BRZ", rarity: "稀有" },
+                        { name: "2022 WRX", rarity: "普通" }
+                    ] },
+                { brand: "沃尔沃", models: [
+                        { name: "1983 242.Trubo.Evolution", rarity: "稀有" }
+                    ] },
+                { brand: "五菱", models: [
+                        { name: "2013 Sunshine.S", rarity: "普通" },
+                        { name: "2020 Sunshine.S.FE", rarity: "极限竞速特别版" },
+                        { name: "2022 宏光.Mini.EV", rarity: "普通" }
+                    ] },
+                { brand: "现代", models: [
+                        { name: "2019 Veloster.N", rarity: "稀有" },
+                        { name: "2020 i30.N", rarity: "稀有" },
+                        { name: "2021 i20.N", rarity: "稀有" },
+                        { name: "2022 N.Vision.74", rarity: "传奇" },
+                        { name: "2023 IONIQ.5.N", rarity: "稀有" }
+                    ] },
+                { brand: "雪佛兰", models: [
+                        { name: "1953 Corvette", rarity: "传奇" },
+                        { name: "1955 150.Utility.Sedan", rarity: "普通" },
+                        { name: "1957 Bel.Air", rarity: "传奇" },
+                        { name: "1960 Corvette", rarity: "传奇" },
+                        { name: "1964 Impala.Super.Sport.409", rarity: "传奇" },
+                        { name: "1967 Corvette.Stingray.427", rarity: "传奇" },
+                        { name: "1969 Nova.Super.Sport.396", rarity: "传奇" },
+                        { name: "1969 Camaro.Super.Sport.Coupe", rarity: "传奇" },
+                        { name: "1970 Chevelle.Super.Sport.454", rarity: "传奇" },
+                        { name: "1970 El.Camino.Super.Sport.454", rarity: "传奇" },
+                        { name: "1970 Camaro.Z28", rarity: "传奇" },
+                        { name: "1970 Corvette.ZR-1", rarity: "传奇" },
+                        { name: "1972 K-10.Cusom", rarity: "普通" },
+                        { name: "1979 Camaro.Z28", rarity: "稀有" },
+                        { name: "1988 Monte.Carlo.Super.Sport", rarity: "稀有" },
+                        { name: "1995 Corvette.ZR-1", rarity: "史诗" },
+                        { name: "1996 Impala.Super.Sport", rarity: "稀有" },
+                        { name: "2002 Corvette.Z06", rarity: "史诗" },
+                        { name: "2009 Corvette.ZR1", rarity: "传奇" },
+                        { name: "2015 Corvette.Z06", rarity: "史诗" },
+                        { name: "2015 Camaro.Z/28", rarity: "史诗" },
+                        { name: "2017 Camaro.ZL1", rarity: "史诗" },
+                        { name: "2018 Camaro.ZL1.1LE", rarity: "传奇" },
+                        { name: "2019 Corvette.ZR1", rarity: "传奇" },
+                        { name: "2020 Corvette.Stingray.Coupe", rarity: "史诗" },
+                        { name: "2020 Silverado.LT.Trail.Boss", rarity: "稀有" },
+                        { name: "2023 Corvette.Z06", rarity: "传奇" },
+                        { name: "2024 Corvette.E-Ray", rarity: "史诗" }
+                    ] }
+            ];
+
+            // ============================================================
+            //  状态管理 - 收集状态
+            // ============================================================
+            const STORAGE_KEY = 'vehicle_collect_status_v3';
+            let statusMap = {};
+
+            function loadStatus() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (raw) {
+                        statusMap = JSON.parse(raw);
+                        for (const key in statusMap) {
+                            if (statusMap[key] !== 'collected') delete statusMap[key];
+                        }
+                    } else {
+                        statusMap = {};
+                    }
+                } catch (e) {
+                    statusMap = {};
+                }
+            }
+
+            function saveStatus() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
+            }
+
+            function getStatus(brand, model) {
+                return statusMap[brand + '|' + model] || 'none';
+            }
+
+            function toggleStatus(brand, model) {
+                const key = brand + '|' + model;
+                if (statusMap[key] === 'collected') {
+                    delete statusMap[key];
+                } else {
+                    statusMap[key] = 'collected';
+                }
+                saveStatus();
+                renderMain();
+            }
+
+            function resetAll() {
+                if (confirm('确定重置所有车辆为「未收集」状态吗？')) {
+                    statusMap = {};
+                    saveStatus();
+                    renderMain();
+                    showToast('已重置所有状态', 'success');
+                }
+            }
+
+            // ============================================================
+            //  状态管理 - 车辆选择 (meta: true/false, highlight: none/red/yellow)
+            // ============================================================
+            const SELECT_KEY = 'vehicle_select_list_v10';
+            let selectEntries = [];
+
+            function loadSelect() {
+                try {
+                    const raw = localStorage.getItem(SELECT_KEY);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed)) {
+                            selectEntries = parsed.filter(e => e && e.brand && e.model && e.level && e.category);
+                            selectEntries = selectEntries.map(e => ({
+                                ...e,
+                                drive: e.drive || '四驱',
+                                meta: e.meta === true,
+                                highlight: e.highlight || 'none'
+                            }));
+                        } else {
+                            selectEntries = [];
+                            for (const key in parsed) {
+                                const val = parsed[key];
+                                if (val && val.level && val.category) {
+                                    const parts = key.split('|');
+                                    if (parts.length === 2) {
+                                        selectEntries.push({
+                                            brand: parts[0],
+                                            model: parts[1],
+                                            level: val.level,
+                                            category: val.category,
+                                            drive: val.drive || '四驱',
+                                            meta: val.meta === true,
+                                            highlight: val.highlight || 'none'
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        selectEntries = [];
+                    }
+                } catch (e) {
+                    selectEntries = [];
+                }
+                const seen = new Set();
+                const dedup = [];
+                selectEntries.forEach(e => {
+                    const key = e.brand + '|' + e.model + '|' + e.level + '|' + e.category;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        dedup.push(e);
+                    }
+                });
+                selectEntries = dedup;
+            }
+
+            function saveSelect() {
+                localStorage.setItem(SELECT_KEY, JSON.stringify(selectEntries));
+            }
+
+            function addToSelect(brand, model, level, category, drive, meta, highlight) {
+                const exists = selectEntries.some(e =>
+                    e.brand === brand && e.model === model &&
+                    e.level === level && e.category === category
+                );
+                if (exists) {
+                    showToast('⚠️ 该分类下已存在此车辆', 'error');
+                    return false;
+                }
+                selectEntries.push({
+                    brand,
+                    model,
+                    level,
+                    category,
+                    drive: drive || '四驱',
+                    meta: meta === true,
+                    highlight: highlight || 'none'
+                });
+                saveSelect();
+                renderSelect();
+                updateSelectBadge();
+                const metaLabel = meta ? ' 🔴META' : ' 📋Other';
+                const hlLabel = highlight === 'red' ? ' +红色高亮' : highlight === 'yellow' ? ' +黄色高亮' : '';
+                showToast(`✅ 已添加：${brand} ${model} → ${level} / ${category}${metaLabel}${hlLabel}`, 'success');
+                return true;
+            }
+
+            function removeFromSelect(brand, model, level, category) {
+                const idx = selectEntries.findIndex(e =>
+                    e.brand === brand && e.model === model &&
+                    e.level === level && e.category === category
+                );
+                if (idx !== -1) {
+                    selectEntries.splice(idx, 1);
+                    saveSelect();
+                    renderSelect();
+                    updateSelectBadge();
+                    showToast('已移除', 'success');
+                    return true;
+                }
+                return false;
+            }
+
+            function toggleHighlight(brand, model, level, category) {
+                const idx = selectEntries.findIndex(e =>
+                    e.brand === brand && e.model === model &&
+                    e.level === level && e.category === category
+                );
+                if (idx !== -1) {
+                    const current = selectEntries[idx].highlight || 'none';
+                    const next = current === 'none' ? 'yellow' : current === 'yellow' ? 'red' : 'none';
+                    selectEntries[idx].highlight = next;
+                    saveSelect();
+                    renderSelect();
+                    return true;
+                }
+                return false;
+            }
+
+            function toggleMeta(brand, model, level, category) {
+                const idx = selectEntries.findIndex(e =>
+                    e.brand === brand && e.model === model &&
+                    e.level === level && e.category === category
+                );
+                if (idx !== -1) {
+                    selectEntries[idx].meta = !selectEntries[idx].meta;
+                    saveSelect();
+                    renderSelect();
+                    return true;
+                }
+                return false;
+            }
+
+            function clearAllSelect() {
+                if (selectEntries.length === 0) {
+                    showToast('列表已为空', 'error');
+                    return;
+                }
+                if (confirm('确定清空所有已选车辆吗？')) {
+                    selectEntries = [];
+                    saveSelect();
+                    renderSelect();
+                    updateSelectBadge();
+                    showToast('已清空全部', 'success');
+                }
+            }
+
+            function getSelectCount() {
+                return selectEntries.length;
+            }
+
+            function updateSelectBadge() {
+                document.getElementById('selectCountBadge').textContent = getSelectCount();
+                document.getElementById('selectedTotal').textContent = getSelectCount();
+            }
+
+            // ============================================================
+            //  Toast
+            // ============================================================
+            let toastTimer = null;
+
+            function showToast(msg, type) {
+                const el = document.getElementById('toast');
+                el.textContent = msg;
+                el.className = 'toast ' + (type || '');
+                clearTimeout(toastTimer);
+                void el.offsetWidth;
+                el.classList.add('show');
+                toastTimer = setTimeout(() => {
+                    el.classList.remove('show');
+                }, 2500);
+            }
+
+            // ============================================================
+            //  导出/导入
+            // ============================================================
+            function exportMainCSV() {
+                const rows = [
+                    ['品牌', '车型', '稀有度', '状态']
+                ];
+                CAR_DATA.forEach(b => {
+                    b.models.forEach(m => {
+                        const status = getStatus(b.brand, m.name);
+                        rows.push([b.brand, m.name, m.rarity, status === 'collected' ? '已收集' : '未收集']);
+                    });
+                });
+                const csvContent = rows.map(row =>
+                    row.map(cell => {
+                        const str = String(cell);
+                        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                            return '"' + str.replace(/"/g, '""') + '"';
+                        }
+                        return str;
+                    }).join(',')
+                ).join('\n');
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = '车辆收集数据.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                showToast('✅ 导出成功！', 'success');
+            }
+
+            function importMainCSV(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const content = e.target.result;
+                        const clean = content.replace(/^\uFEFF/, '');
+                        const lines = clean.split(/\r?\n/).filter(line => line.trim() !== '');
+                        if (lines.length < 2) {
+                            showToast('❌ 文件为空', 'error');
+                            return;
+                        }
+                        const header = parseCSVLine(lines[0]);
+                        let brandIdx = -1,
+                            modelIdx = -1,
+                            statusIdx = -1;
+                        header.forEach((col, i) => {
+                            const c = col.trim();
+                            if (c === '品牌' || c === 'brand') brandIdx = i;
+                            if (c === '车型' || c === 'model') modelIdx = i;
+                            if (c === '状态' || c === 'status') statusIdx = i;
+                        });
+                        if (brandIdx === -1 || modelIdx === -1) {
+                            const firstData = parseCSVLine(lines[1]);
+                            if (firstData.length >= 2) {
+                                brandIdx = 0;
+                                modelIdx = 1;
+                                statusIdx = 3;
+                            } else {
+                                showToast('❌ 需要列：品牌,车型,状态', 'error');
+                                return;
+                            }
+                        }
+                        const carIndex = new Set();
+                        CAR_DATA.forEach(b => b.models.forEach(m => carIndex.add(b.brand + '|' + m.name)));
+
+                        let matchedCount = 0,
+                            importedCount = 0;
+                        for (let i = 1; i < lines.length; i++) {
+                            const cols = parseCSVLine(lines[i]);
+                            if (cols.length <= Math.max(brandIdx, modelIdx, statusIdx)) continue;
+                            const brand = cols[brandIdx]?.trim() || '';
+                            const model = cols[modelIdx]?.trim() || '';
+                            const statusVal = cols[statusIdx]?.trim() || '';
+                            if (!brand || !model) continue;
+                            const key = brand + '|' + model;
+                            if (carIndex.has(key)) {
+                                matchedCount++;
+                                if (statusVal === '已收集' || statusVal === 'collected' || statusVal === '✅ 已收集') {
+                                    statusMap[key] = 'collected';
+                                    importedCount++;
+                                } else {
+                                    delete statusMap[key];
+                                }
+                            }
+                        }
+                        saveStatus();
+                        renderMain();
+                        showToast(`✅ 导入成功！匹配 ${matchedCount} 辆车，${importedCount} 辆已收集`, 'success');
+                    } catch (err) {
+                        showToast('❌ 导入失败：' + err.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function exportSelectCSV() {
+                if (selectEntries.length === 0) {
+                    showToast('⚠️ 没有数据可导出', 'error');
+                    return;
+                }
+                const rows = [
+                    ['品牌', '车型', '等级', '类型', '驱动', '分类', '高亮']
+                ];
+                const metaMap = { true: 'META', false: 'Other' };
+                const hlMap = { 'none': '无', 'red': '红色', 'yellow': '黄色' };
+                selectEntries.forEach(e => {
+                    rows.push([e.brand, e.model, e.level, e.category, e.drive || '四驱', metaMap[e.meta] || 'Other', hlMap[e
+                        .highlight] || '无']);
+                });
+                const csvContent = rows.map(row =>
+                    row.map(cell => {
+                        const str = String(cell);
+                        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                            return '"' + str.replace(/"/g, '""') + '"';
+                        }
+                        return str;
+                    }).join(',')
+                ).join('\n');
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = '车辆选择数据.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                showToast('✅ 导出 ' + selectEntries.length + ' 条数据成功！', 'success');
+            }
+
+            function importSelectCSV(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const content = e.target.result;
+                        const clean = content.replace(/^\uFEFF/, '');
+                        const lines = clean.split(/\r?\n/).filter(line => line.trim() !== '');
+                        if (lines.length < 2) {
+                            showToast('❌ 文件为空', 'error');
+                            return;
+                        }
+                        const header = parseCSVLine(lines[0]);
+                        let brandIdx = -1,
+                            modelIdx = -1,
+                            levelIdx = -1,
+                            catIdx = -1,
+                            driveIdx = -1,
+                            metaIdx = -1,
+                            hlIdx = -1;
+                        header.forEach((col, i) => {
+                            const c = col.trim();
+                            if (c === '品牌' || c === 'brand') brandIdx = i;
+                            if (c === '车型' || c === 'model') modelIdx = i;
+                            if (c === '等级' || c === 'level') levelIdx = i;
+                            if (c === '类型' || c === 'category' || c === '分类') catIdx = i;
+                            if (c === '驱动' || c === 'drive') driveIdx = i;
+                            if (c === '分类' || c === 'meta') metaIdx = i;
+                            if (c === '高亮' || c === 'highlight') hlIdx = i;
+                        });
+                        if (brandIdx === -1 || modelIdx === -1 || levelIdx === -1 || catIdx === -1) {
+                            showToast('❌ 需要列：品牌,车型,等级,类型,驱动,分类,高亮', 'error');
+                            return;
+                        }
+                        const carIndex = new Set();
+                        CAR_DATA.forEach(b => b.models.forEach(m => carIndex.add(b.brand + '|' + m.name)));
+
+                        let addedCount = 0,
+                            skipCount = 0;
+                        const validLevels = ['R', 'S2', 'S1', 'A', 'B', 'C', 'D'];
+                        const validCats = ['公路', '拉力', '越野', '漂移'];
+                        const validDrives = ['四驱', '前驱', '后驱'];
+                        const metaMap = { 'META': true, 'Other': false, 'true': true, 'false': false };
+                        const hlMap = { '无': 'none', '红色': 'red', '黄色': 'yellow', 'red': 'red', 'yellow': 'yellow' };
+
+                        const newEntries = [];
+                        for (let i = 1; i < lines.length; i++) {
+                            const cols = parseCSVLine(lines[i]);
+                            if (cols.length <= Math.max(brandIdx, modelIdx, levelIdx, catIdx)) continue;
+                            const brand = cols[brandIdx]?.trim() || '';
+                            const model = cols[modelIdx]?.trim() || '';
+                            let level = cols[levelIdx]?.trim() || 'B';
+                            let category = cols[catIdx]?.trim() || '公路';
+                            let drive = (driveIdx !== -1 && cols[driveIdx]) ? cols[driveIdx].trim() : '四驱';
+                            let meta = false;
+                            if (metaIdx !== -1 && cols[metaIdx]) {
+                                const mVal = cols[metaIdx].trim();
+                                meta = metaMap[mVal] !== undefined ? metaMap[mVal] : false;
+                            }
+                            let highlight = 'none';
+                            if (hlIdx !== -1 && cols[hlIdx]) {
+                                const hVal = cols[hlIdx].trim();
+                                highlight = hlMap[hVal] || 'none';
+                            }
+                            if (!brand || !model) continue;
+                            if (!carIndex.has(brand + '|' + model)) {
+                                skipCount++;
+                                continue;
+                            }
+                            if (!validLevels.includes(level)) level = 'B';
+                            if (!validCats.includes(category)) category = '公路';
+                            if (!validDrives.includes(drive)) drive = '四驱';
+                            const exists = selectEntries.some(e =>
+                                e.brand === brand && e.model === model &&
+                                e.level === level && e.category === category
+                            );
+                            if (!exists) {
+                                newEntries.push({ brand, model, level, category, drive, meta, highlight });
+                                addedCount++;
+                            } else {
+                                skipCount++;
+                            }
+                        }
+                        if (addedCount === 0 && skipCount > 0) {
+                            showToast(`⚠️ 没有新数据可导入（${skipCount} 条已存在或无效）`, 'error');
+                            return;
+                        }
+                        newEntries.forEach(e => selectEntries.push(e));
+                        saveSelect();
+                        renderSelect();
+                        updateSelectBadge();
+                        showToast(`✅ 导入成功！新增 ${addedCount} 条，跳过 ${skipCount} 条`, 'success');
+                    } catch (err) {
+                        showToast('❌ 导入失败：' + err.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function parseCSVLine(line) {
+                const result = [];
+                let current = '',
+                    inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (inQuotes) {
+                        if (ch === '"' && line[i + 1] === '"') { current += '"';
+                            i++; } else if (ch === '"') inQuotes = false;
+                        else current += ch;
+                    } else {
+                        if (ch === '"') inQuotes = true;
+                        else if (ch === ',') { result.push(current.trim());
+                            current = ''; } else current += ch;
+                    }
+                }
+                result.push(current.trim());
+                return result;
+            }
+
+            // ============================================================
+            //  渲染：主页面
+            // ============================================================
+            let currentFilter = 'all';
+            let searchKeyword = '';
+
+            function renderMain() {
+                const container = document.getElementById('brandContainer');
+                container.innerHTML = '';
+
+                let totalCars = 0,
+                    stats = { none: 0, collected: 0 };
+                let allCars = [];
+                CAR_DATA.forEach(b => b.models.forEach(m => allCars.push({ brand: b.brand, name: m.name, rarity: m.rarity })));
+
+                let filtered = allCars.filter(car => {
+                    const matchSearch = car.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+                        car.brand.toLowerCase().includes(searchKeyword.toLowerCase());
+                    if (!matchSearch) return false;
+                    const status = getStatus(car.brand, car.name);
+                    if (currentFilter === 'all') return true;
+                    return status === currentFilter;
+                });
+
+                const grouped = {};
+                filtered.forEach(car => {
+                    if (!grouped[car.brand]) grouped[car.brand] = [];
+                    grouped[car.brand].push(car);
+                });
+                const sortedBrands = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'zh'));
+
+                allCars.forEach(car => {
+                    const st = getStatus(car.brand, car.name);
+                    if (st === 'collected') stats.collected++;
+                    else stats.none++;
+                    totalCars++;
+                });
+
+                document.getElementById('totalCount').textContent = totalCars;
+                document.getElementById('statNone').textContent = stats.none;
+                document.getElementById('statCollected').textContent = stats.collected;
+
+                if (sortedBrands.length === 0) {
+                    container.innerHTML = `<div class="empty-msg">🚫 没有匹配的车辆</div>`;
+                    return;
+                }
+
+                sortedBrands.forEach(brand => {
+                    const cars = grouped[brand];
+                    const card = document.createElement('div');
+                    card.className = 'brand-card';
+
+                    const header = document.createElement('div');
+                    header.className = 'brand-header';
+                    header.innerHTML = `<span>${brand}</span><span class="badge">${cars.length}</span>`;
+                    card.appendChild(header);
+
+                    const list = document.createElement('div');
+                    list.className = 'car-list';
+
+                    cars.sort((a, b) => {
+                        const ya = parseInt(a.name.match(/^(\d{4})/)?.[1] || '0');
+                        const yb = parseInt(b.name.match(/^(\d{4})/)?.[1] || '0');
+                        return ya - yb;
+                    });
+
+                    cars.forEach(car => {
+                        const status = getStatus(car.brand, car.name);
+                        const yearMatch = car.name.match(/^(\d{4})/);
+                        const year = yearMatch ? yearMatch[1] : '';
+                        const nameDisplay = car.name.replace(/^\d{4}\s*/, '');
+
+                        const item = document.createElement('div');
+                        item.className = 'car-item';
+                        const rarityColors = {
+                            '普通': '#8edb9e',
+                            '稀有': '#7ab8e8',
+                            '史诗': '#b88ad4',
+                            '极限竞速特别版': '#7a4a9a',
+                            '传奇': '#e8c84a',
+                            '车房宝物': '#b8943a'
+                        };
+                        item.style.borderLeftColor = rarityColors[car.rarity] || '#dce1e8';
+
+                        const statusLabel = status === 'collected' ? '✅ 已收集' : '⬜ 未收集';
+                        const statusClass = status === 'collected' ? 'tag-status-collected' : 'tag-status-none';
+
+                        item.innerHTML = `
+                        <span class="name">
+                            ${year ? `<span class="year">${year}</span>` : ''}
+                            ${nameDisplay}
+                        </span>
+                        <div class="car-tags">
+                            <span class="tag tag-rarity-${car.rarity}">${car.rarity}</span>
+                            <span class="tag tag-status ${statusClass}" data-brand="${car.brand}" data-model="${car.name}">${statusLabel}</span>
+                        </div>
+                    `;
+
+                        const statusTag = item.querySelector('.tag-status');
+                        statusTag.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            toggleStatus(car.brand, car.name);
+                        });
+
+                        list.appendChild(item);
+                    });
+
+                    card.appendChild(list);
+                    container.appendChild(card);
+                });
+            }
+
+            // ============================================================
+            //  渲染：车辆选择页面 + 扩大功能
+            // ============================================================
+            const CATEGORIES = ['公路', '拉力', '越野', '漂移'];
+            const LEVELS = ['R', 'S2', 'S1', 'A', 'B', 'C', 'D'];
+            const LEVEL_NAMES = { 'R': 'R 级', 'S2': 'S2 级', 'S1': 'S1 级', 'A': 'A 级', 'B': 'B 级', 'C': 'C 级',
+                'D': 'D 级' };
+            const CAT_ICONS = { '公路': '🏁', '拉力': '🏔️', '越野': '🌲', '漂移': '🌀' };
+            const CAT_COLORS = { '公路': 'cat-公路', '拉力': 'cat-拉力', '越野': 'cat-越野', '漂移': 'cat-漂移' };
+            const DRIVE_ICONS = { '四驱': '🔵', '前驱': '🟡', '后驱': '🔴' };
+
+            let categoryFilter = 'all';
+            let levelFilter = 'all';
+            let driveFilter = 'all';
+            let metaFilter = 'all';
+            let highlightFilter = 'all';
+            let isEditMode = false;
+            let expandedCategory = null;
+
+            let dragState = null;
+
+            // ===== 拖动事件 =====
+            function onDragStart(e) {
+                const el = e.currentTarget;
+                const brand = el.dataset.brand;
+                const model = el.dataset.model;
+                const level = el.dataset.level;
+                const category = el.dataset.category;
+
+                const indices = [];
+                selectEntries.forEach((entry, i) => {
+                    if (entry.level === level && entry.category === category) {
+                        indices.push(i);
+                    }
+                });
+                
+                let realIdx = -1;
+                for (let i = 0; i < indices.length; i++) {
+                    const idx = indices[i];
+                    if (selectEntries[idx].brand === brand && 
+                        selectEntries[idx].model === model &&
+                        selectEntries[idx].level === level && 
+                        selectEntries[idx].category === category) {
+                        realIdx = i;
+                        break;
+                    }
+                }
+
+                dragState = {
+                    element: el,
+                    fromIndex: realIdx,
+                    level: level,
+                    category: category,
+                    brand: brand,
+                    model: model
+                };
+                el.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    brand,
+                    model,
+                    level,
+                    category
+                }));
+                document.querySelectorAll('.select-car-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+            }
+
+            function onDragEnd(e) {
+                const el = e.currentTarget;
+                el.classList.remove('dragging');
+                document.querySelectorAll('.select-car-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+                dragState = null;
+            }
+
+            function onDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const el = e.currentTarget;
+                if (dragState && dragState.element === el) return;
+                if (dragState) {
+                    const targetLevel = el.dataset.level;
+                    const targetCategory = el.dataset.category;
+                    if (targetLevel !== dragState.level || targetCategory !== dragState.category) {
+                        el.classList.remove('drag-over');
+                        return;
+                    }
+                }
+                el.classList.add('drag-over');
+            }
+
+            function onDragEnter(e) {
+                e.preventDefault();
+                const el = e.currentTarget;
+                if (dragState && dragState.element === el) return;
+                if (dragState) {
+                    const targetLevel = el.dataset.level;
+                    const targetCategory = el.dataset.category;
+                    if (targetLevel !== dragState.level || targetCategory !== dragState.category) {
+                        el.classList.remove('drag-over');
+                        return;
+                    }
+                }
+                el.classList.add('drag-over');
+            }
+
+            function onDragLeave(e) {
+                const el = e.currentTarget;
+                const related = e.relatedTarget;
+                if (related && el.contains(related)) return;
+                el.classList.remove('drag-over');
+            }
+
+            function onDrop(e) {
+                e.preventDefault();
+                const targetEl = e.currentTarget;
+                targetEl.classList.remove('drag-over');
+
+                if (!dragState || dragState.element === targetEl) {
+                    dragState = null;
+                    return;
+                }
+
+                const targetLevel = targetEl.dataset.level;
+                const targetCategory = targetEl.dataset.category;
+
+                if (targetLevel !== dragState.level || targetCategory !== dragState.category) {
+                    showToast('⚠️ 只能在同一分类内拖动排序', 'error');
+                    dragState = null;
+                    return;
+                }
+
+                const indices = [];
+                selectEntries.forEach((e, i) => {
+                    if (e.level === targetLevel && e.category === targetCategory) {
+                        indices.push(i);
+                    }
+                });
+
+                let targetIdx = -1;
+                for (let i = 0; i < indices.length; i++) {
+                    const idx = indices[i];
+                    if (selectEntries[idx].brand === targetEl.dataset.brand && 
+                        selectEntries[idx].model === targetEl.dataset.model &&
+                        selectEntries[idx].level === targetLevel && 
+                        selectEntries[idx].category === targetCategory) {
+                        targetIdx = i;
+                        break;
+                    }
+                }
+
+                const fromIdx = dragState.fromIndex;
+                const toIdx = targetIdx;
+
+                if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) {
+                    dragState = null;
+                    return;
+                }
+
+                const fromRealIdx = indices[fromIdx];
+                const toRealIdx = indices[toIdx];
+
+                if (fromRealIdx === undefined || toRealIdx === undefined) {
+                    dragState = null;
+                    return;
+                }
+
+                const [moved] = selectEntries.splice(fromRealIdx, 1);
+                
+                let newToIdx = toRealIdx;
+                if (fromRealIdx < toRealIdx) {
+                    newToIdx = toRealIdx - 1;
+                }
+                
+                selectEntries.splice(newToIdx, 0, moved);
+                
+                saveSelect();
+                renderSelect();
+                showToast('✅ 已调整顺序', 'success');
+                dragState = null;
+            }
+
+            // ===== 扩大/收起（关闭无动画） =====
+            function toggleExpand(category) {
+                const overlay = document.getElementById('expandOverlay');
+                const cards = document.querySelectorAll('.category-card');
+                
+                if (expandedCategory === category) {
+                    // 关闭 - 无动画，直接消失
+                    cards.forEach(card => {
+                        card.classList.remove('expanded');
+                    });
+                    overlay.classList.remove('show');
+                    expandedCategory = null;
+                    document.body.style.overflow = '';
+                    return;
+                }
+
+                // 展开 - 有动画
+                cards.forEach(card => {
+                    card.classList.remove('expanded');
+                    const header = card.querySelector('.category-header');
+                    if (header && header.textContent.includes(category)) {
+                        card.classList.add('expanded');
+                    }
+                });
+                overlay.classList.add('show');
+                expandedCategory = category;
+                document.body.style.overflow = 'hidden';
+            }
+
+            // 点击透明遮罩收起（无动画）
+            document.getElementById('expandOverlay').addEventListener('click', function() {
+                if (expandedCategory) {
+                    const cards = document.querySelectorAll('.category-card');
+                    cards.forEach(card => {
+                        card.classList.remove('expanded');
+                    });
+                    this.classList.remove('show');
+                    expandedCategory = null;
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // ESC 键收起（无动画）
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && expandedCategory) {
+                    const cards = document.querySelectorAll('.category-card');
+                    cards.forEach(card => {
+                        card.classList.remove('expanded');
+                    });
+                    document.getElementById('expandOverlay').classList.remove('show');
+                    expandedCategory = null;
+                    document.body.style.overflow = '';
+                }
+            });
+
+            function renderSelect() {
+                const container = document.getElementById('selectContainer');
+                container.innerHTML = '';
+
+                const total = selectEntries.length;
+                document.getElementById('selectedTotal').textContent = total;
+                updateSelectBadge();
+
+                if (total === 0) {
+                    container.innerHTML = `<div class="empty-category">🎯 还没有选择任何车辆<br>点击「添加车辆」从完整列表中选择</div>`;
+                    return;
+                }
+
+                const carIndex = {};
+                CAR_DATA.forEach(b => {
+                    b.models.forEach(m => {
+                        carIndex[b.brand + '|' + m.name] = { brand: b.brand, name: m.name };
+                    });
+                });
+
+                let filtered = selectEntries.filter(e => {
+                    if (categoryFilter !== 'all' && e.category !== categoryFilter) return false;
+                    if (levelFilter !== 'all' && e.level !== levelFilter) return false;
+                    if (driveFilter !== 'all' && e.drive !== driveFilter) return false;
+                    if (metaFilter === 'meta' && !e.meta) return false;
+                    if (metaFilter === 'other' && e.meta) return false;
+                    if (highlightFilter === 'red' && e.highlight !== 'red') return false;
+                    if (highlightFilter === 'yellow' && e.highlight !== 'yellow') return false;
+                    if (highlightFilter === 'none' && e.highlight !== 'none') return false;
+                    return true;
+                });
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="empty-category">🔍 没有匹配的车辆，试试调整筛选条件</div>`;
+                    return;
+                }
+
+                const categoryGroups = {};
+                CATEGORIES.forEach(cat => {
+                    categoryGroups[cat] = {};
+                    LEVELS.forEach(lv => {
+                        categoryGroups[cat][lv] = [];
+                    });
+                });
+
+                selectEntries.forEach(e => {
+                    if (categoryFilter !== 'all' && e.category !== categoryFilter) return;
+                    if (levelFilter !== 'all' && e.level !== levelFilter) return;
+                    if (driveFilter !== 'all' && e.drive !== driveFilter) return;
+                    if (metaFilter === 'meta' && !e.meta) return;
+                    if (metaFilter === 'other' && e.meta) return;
+                    if (highlightFilter === 'red' && e.highlight !== 'red') return;
+                    if (highlightFilter === 'yellow' && e.highlight !== 'yellow') return;
+                    if (highlightFilter === 'none' && e.highlight !== 'none') return;
+                    const car = carIndex[e.brand + '|' + e.model];
+                    if (!car) return;
+                    const cat = e.category || '公路';
+                    const lv = e.level || 'B';
+                    if (categoryGroups[cat] && categoryGroups[cat][lv]) {
+                        categoryGroups[cat][lv].push({ ...car, level: lv, category: cat, drive: e.drive || '四驱',
+                            meta: e.meta || false, highlight: e.highlight || 'none' });
+                    }
+                });
+
+                CATEGORIES.forEach(cat => {
+                    const levelMap = categoryGroups[cat];
+                    let totalInCat = 0;
+                    LEVELS.forEach(lv => {
+                        totalInCat += (levelMap[lv] || []).length;
+                    });
+                    if (totalInCat === 0) return;
+
+                    const card = document.createElement('div');
+                    card.className = 'category-card';
+
+                    const header = document.createElement('div');
+                    header.className = `category-header ${CAT_COLORS[cat] || 'cat-公路'}`;
+                    header.innerHTML = `
+                        <span>${CAT_ICONS[cat] || ''} ${cat}</span>
+                        <span class="count-badge">${totalInCat}</span>
+                    `;
+                    header.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (expandedCategory) {
+                            const overlay = document.getElementById('expandOverlay');
+                            document.querySelectorAll('.category-card').forEach(c => c.classList.remove('expanded'));
+                            overlay.classList.remove('show');
+                            document.body.style.overflow = '';
+                            expandedCategory = null;
+                            if (expandedCategory === cat) return;
+                        }
+                        toggleExpand(cat);
+                    });
+                    card.appendChild(header);
+
+                    const body = document.createElement('div');
+                    body.className = 'category-body';
+
+                    LEVELS.forEach(lv => {
+                        const cars = levelMap[lv] || [];
+                        if (cars.length === 0) return;
+
+                        const groupDiv = document.createElement('div');
+                        groupDiv.className = 'level-group';
+
+                        const title = document.createElement('div');
+                        title.className = 'level-group-title';
+                        title.innerHTML = `<span>${LEVEL_NAMES[lv]}</span><span>${cars.length}</span>`;
+                        groupDiv.appendChild(title);
+
+                        const metaCars = cars.filter(c => c.meta === true);
+                        const otherCars = cars.filter(c => c.meta === false);
+
+                        const subGroups = [
+                            { label: '🔴 META', cars: metaCars, type: 'meta' },
+                            { label: '📋 Other', cars: otherCars, type: 'other' }
+                        ];
+
+                        subGroups.forEach(sg => {
+                            if (sg.cars.length === 0) return;
+                            const subGroup = document.createElement('div');
+                            subGroup.className = 'sub-group';
+
+                            const subTitle = document.createElement('div');
+                            subTitle.className = 'sub-group-title';
+                            subTitle.innerHTML = `<span>${sg.label}</span><span class="sub-count">${sg.cars.length}</span>`;
+                            subGroup.appendChild(subTitle);
+
+                            const subList = document.createElement('div');
+                            subList.className = 'sub-group-cars';
+                            sg.cars.forEach((car) => {
+                                const item = createCarItem(car, lv, cat);
+                                subList.appendChild(item);
+                            });
+                            subGroup.appendChild(subList);
+                            groupDiv.appendChild(subGroup);
+                        });
+
+                        body.appendChild(groupDiv);
+                    });
+
+                    card.appendChild(body);
+                    container.appendChild(card);
+                });
+            }
+
+            function createCarItem(car, lv, cat) {
+                const isMeta = car.meta === true;
+                const isRed = car.highlight === 'red';
+                const isYellow = car.highlight === 'yellow';
+
+                let hlClass = '';
+                if (isYellow) hlClass = 'highlight-yellow';
+                else if (isRed) hlClass = 'highlight-red';
+
+                const item = document.createElement('div');
+                item.className = `select-car-item ${hlClass}`;
+                item.dataset.brand = car.brand;
+                item.dataset.model = car.name;
+                item.dataset.level = lv;
+                item.dataset.category = cat;
+                item.dataset.meta = isMeta ? 'true' : 'false';
+                item.dataset.highlight = car.highlight || 'none';
+
+                const yearMatch = car.name.match(/^(\d{4})/);
+                const year = yearMatch ? yearMatch[1] : '';
+                const nameDisplay = car.name.replace(/^\d{4}\s*/, '');
+
+                const driveTag =
+                    `<span class="drive-tag drive-${car.drive || '四驱'}">${DRIVE_ICONS[car.drive || '四驱'] || '🔵'} ${car.drive || '四驱'}</span>`;
+
+                let metaTag = '';
+                if (isMeta) metaTag = `<span class="meta-tag">META</span>`;
+
+                const removeBtn = isEditMode ?
+                    `<button class="action-btn remove" data-action="remove" data-brand="${car.brand}" data-model="${car.name}" data-level="${lv}" data-category="${cat}" title="从此分类移除">✕</button>` :
+                    '';
+
+                const dragHandle = isEditMode ?
+                    `<span class="drag-handle show" title="拖动排序">⠿</span>` :
+                    `<span class="drag-handle">⠿</span>`;
+
+                const hlToggleBtn = isEditMode ?
+                    `<button class="action-btn" data-action="toggle-hl" data-brand="${car.brand}" data-model="${car.name}" data-level="${lv}" data-category="${cat}" title="切换高亮" style="color:#e94560;font-size:10px;font-weight:700;">${isRed ? '🔴' : isYellow ? '🟡' : '○'}</button>` :
+                    '';
+
+                const metaToggleBtn = isEditMode ?
+                    `<button class="action-btn" data-action="toggle-meta" data-brand="${car.brand}" data-model="${car.name}" data-level="${lv}" data-category="${cat}" title="切换 META/Other" style="color:#e94560;font-size:9px;font-weight:700;">${isMeta ? 'M' : 'O'}</button>` :
+                    '';
+
+                item.innerHTML = `
+                    <div class="car-left">
+                        <span class="brand-icon">${car.brand}</span>
+                        <span class="car-name">${year ? `<span class="year-text">${year}</span> ` : ''}${nameDisplay}</span>
+                    </div>
+                    <div class="car-tags-right">
+                        ${driveTag}
+                        ${metaTag}
+                        ${hlToggleBtn}
+                        ${metaToggleBtn}
+                        ${removeBtn}
+                        ${dragHandle}
+                    </div>
+                `;
+
+                const removeAction = item.querySelector('[data-action="remove"]');
+                if (removeAction) {
+                    removeAction.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const brand = removeAction.dataset.brand;
+                        const model = removeAction.dataset.model;
+                        const level = removeAction.dataset.level;
+                        const category = removeAction.dataset.category;
+                        if (confirm(`确定从「${category} / ${LEVEL_NAMES[level]}」中移除「${brand} ${model}」吗？`)) {
+                            removeFromSelect(brand, model, level, category);
+                        }
+                    });
+                }
+
+                const hlToggle = item.querySelector('[data-action="toggle-hl"]');
+                if (hlToggle) {
+                    hlToggle.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const brand = hlToggle.dataset.brand;
+                        const model = hlToggle.dataset.model;
+                        const level = hlToggle.dataset.level;
+                        const category = hlToggle.dataset.category;
+                        toggleHighlight(brand, model, level, category);
+                    });
+                }
+
+                const metaToggle = item.querySelector('[data-action="toggle-meta"]');
+                if (metaToggle) {
+                    metaToggle.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const brand = metaToggle.dataset.brand;
+                        const model = metaToggle.dataset.model;
+                        const level = metaToggle.dataset.level;
+                        const category = metaToggle.dataset.category;
+                        toggleMeta(brand, model, level, category);
+                    });
+                }
+
+                if (isEditMode) {
+                    item.draggable = true;
+                    item.addEventListener('dragstart', onDragStart);
+                    item.addEventListener('dragend', onDragEnd);
+                    item.addEventListener('dragover', onDragOver);
+                    item.addEventListener('dragenter', onDragEnter);
+                    item.addEventListener('dragleave', onDragLeave);
+                    item.addEventListener('drop', onDrop);
+                } else {
+                    item.draggable = false;
+                }
+
+                return item;
+            }
+
+            // ============================================================
+            //  添加弹窗
+            // ============================================================
+            function openAddModal() {
+                document.getElementById('addSearchInput').value = '';
+                document.querySelector('input[name="drive"][value="四驱"]').checked = true;
+                document.querySelector('input[name="meta"][value="other"]').checked = true;
+                document.querySelector('input[name="highlight"][value="none"]').checked = true;
+                document.getElementById('addModal').classList.add('show');
+                renderAddVehicleList('');
+            }
+
+            function closeAddModal() {
+                document.getElementById('addModal').classList.remove('show');
+            }
+
+            function renderAddVehicleList(search) {
+                const list = document.getElementById('addVehicleList');
+                list.innerHTML = '';
+
+                const allVehicles = [];
+                CAR_DATA.forEach(b => {
+                    b.models.forEach(m => {
+                        allVehicles.push({ brand: b.brand, name: m.name });
+                    });
+                });
+
+                const searchLower = search.toLowerCase();
+                const filtered = allVehicles.filter(v =>
+                    v.name.toLowerCase().includes(searchLower) ||
+                    v.brand.toLowerCase().includes(searchLower)
+                );
+
+                filtered.sort((a, b) => {
+                    const ya = parseInt(a.name.match(/^(\d{4})/)?.[1] || '0');
+                    const yb = parseInt(b.name.match(/^(\d{4})/)?.[1] || '0');
+                    return ya - yb;
+                });
+
+                const level = document.getElementById('addLevelSelect').value;
+                const category = document.getElementById('addCategorySelect').value;
+                const drive = document.querySelector('input[name="drive"]:checked')?.value || '四驱';
+                const meta = document.querySelector('input[name="meta"]:checked')?.value === 'meta';
+                const highlight = document.querySelector('input[name="highlight"]:checked')?.value || 'none';
+
+                if (filtered.length === 0) {
+                    list.innerHTML = `<div style="padding:20px;text-align:center;color:#8a9aa8;">没有找到匹配的车辆</div>`;
+                    return;
+                }
+
+                filtered.forEach(v => {
+                    const div = document.createElement('div');
+                    div.className = 'v-item';
+
+                    const alreadyAdded = selectEntries.some(e =>
+                        e.brand === v.brand && e.model === v.name &&
+                        e.level === level && e.category === category
+                    );
+
+                    const yearMatch = v.name.match(/^(\d{4})/);
+                    const year = yearMatch ? yearMatch[1] : '';
+                    const displayName = v.name.replace(/^\d{4}\s*/, '');
+
+                    div.innerHTML = `
+                        <div class="v-left">
+                            <span class="v-brand">${v.brand}</span>
+                            <span class="v-name">${year ? `${year} ` : ''}${displayName}</span>
+                        </div>
+                        ${alreadyAdded ? `<span class="v-added">✓ 已添加</span>` :
+                          `<span class="v-add">＋</span>`}
+                    `;
+
+                    if (!alreadyAdded) {
+                        const addSpan = div.querySelector('.v-add');
+                        addSpan.addEventListener('click', () => {
+                            const lv = document.getElementById('addLevelSelect').value;
+                            const cat = document.getElementById('addCategorySelect').value;
+                            const dv = document.querySelector('input[name="drive"]:checked')?.value || '四驱';
+                            const mt = document.querySelector('input[name="meta"]:checked')?.value === 'meta';
+                            const hl = document.querySelector('input[name="highlight"]:checked')?.value || 'none';
+                            addToSelect(v.brand, v.name, lv, cat, dv, mt, hl);
+                            renderAddVehicleList(document.getElementById('addSearchInput').value);
+                        });
+                    }
+
+                    list.appendChild(div);
+                });
+            }
+
+            // ============================================================
+            //  Tab 切换
+            // ============================================================
+            function switchTab(tabId) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+                document.getElementById('tab-' + tabId).classList.add('active');
+                document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+                if (tabId === 'select') {
+                    renderSelect();
+                }
+            }
+
+            // ============================================================
+            //  初始化
+            // ============================================================
+            document.addEventListener('DOMContentLoaded', function() {
+                loadStatus();
+                loadSelect();
+
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        switchTab(btn.dataset.tab);
+                    });
+                });
+
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    searchKeyword = e.target.value.trim();
+                    renderMain();
+                });
+
+                document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove(
+                        'active'));
+                        btn.classList.add('active');
+                        currentFilter = btn.dataset.filter;
+                        renderMain();
+                    });
+                });
+
+                document.getElementById('resetBtn').addEventListener('click', resetAll);
+                document.getElementById('exportBtn').addEventListener('click', exportMainCSV);
+                document.getElementById('importBtn').addEventListener('click', () => {
+                    document.getElementById('fileInput').click();
+                });
+                document.getElementById('fileInput').addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        importMainCSV(file);
+                    }
+                    e.target.value = '';
+                });
+
+                document.getElementById('selectExportBtn').addEventListener('click', exportSelectCSV);
+                document.getElementById('selectImportBtn').addEventListener('click', () => {
+                    document.getElementById('selectFileInput').click();
+                });
+                document.getElementById('selectFileInput').addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        importSelectCSV(file);
+                    }
+                    e.target.value = '';
+                });
+
+                document.getElementById('clearAllSelect').addEventListener('click', clearAllSelect);
+
+                document.getElementById('editToggleBtn').addEventListener('click', function() {
+                    isEditMode = !isEditMode;
+                    this.classList.toggle('active');
+                    this.textContent = isEditMode ? '🔒 退出编辑' : '✏️ 编辑';
+                    document.getElementById('editModeHint').textContent = isEditMode ?
+                        '✏️ 编辑：拖动 ⠿ · ✕ 删除 · ○/🟡/🔴 切换高亮 · M/O 切换分类' :
+                        '💡 开启编辑可删除/拖动/切换高亮或分类';
+                    renderSelect();
+                });
+
+                document.getElementById('addCarFromAllBtn').addEventListener('click', openAddModal);
+
+                document.getElementById('categoryFilterSelect').addEventListener('change', (e) => {
+                    categoryFilter = e.target.value;
+                    renderSelect();
+                });
+                document.getElementById('levelFilterSelect').addEventListener('change', (e) => {
+                    levelFilter = e.target.value;
+                    renderSelect();
+                });
+                document.getElementById('driveFilterSelect').addEventListener('change', (e) => {
+                    driveFilter = e.target.value;
+                    renderSelect();
+                });
+                document.getElementById('metaFilterSelect').addEventListener('change', (e) => {
+                    metaFilter = e.target.value;
+                    renderSelect();
+                });
+                document.getElementById('highlightFilterSelect').addEventListener('change', (e) => {
+                    highlightFilter = e.target.value;
+                    renderSelect();
+                });
+
+                document.getElementById('addSearchInput').addEventListener('input', (e) => {
+                    renderAddVehicleList(e.target.value);
+                });
+                document.getElementById('addLevelSelect').addEventListener('change', () => {
+                    renderAddVehicleList(document.getElementById('addSearchInput').value);
+                });
+                document.getElementById('addCategorySelect').addEventListener('change', () => {
+                    renderAddVehicleList(document.getElementById('addSearchInput').value);
+                });
+                document.querySelectorAll('input[name="drive"]').forEach(el => {
+                    el.addEventListener('change', () => {
+                        renderAddVehicleList(document.getElementById('addSearchInput').value);
+                    });
+                });
+                document.querySelectorAll('input[name="meta"]').forEach(el => {
+                    el.addEventListener('change', () => {
+                        renderAddVehicleList(document.getElementById('addSearchInput').value);
+                    });
+                });
+                document.querySelectorAll('input[name="highlight"]').forEach(el => {
+                    el.addEventListener('change', () => {
+                        renderAddVehicleList(document.getElementById('addSearchInput').value);
+                    });
+                });
+
+                document.getElementById('addCancelBtn').addEventListener('click', closeAddModal);
+
+                renderMain();
+                renderSelect();
+                updateSelectBadge();
+            });
+        })();
+    </script>
+</body>
+</html>
