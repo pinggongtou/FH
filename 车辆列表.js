@@ -6,8 +6,7 @@ const CAR_DATA = [
         { "name": "1968 595.ESSEESSE", "rarity": "稀有" },
         { "name": "1980 菲亚特.131", "rarity": "稀有" },
         { "name": "2016 695.Biposto", "rarity": "史诗" },
-        { "name": "2017 124.Spider", "rarity": "稀有" },
-        { "name": "1", "rarity": "稀有" }
+        { "name": "2017 124.Spider", "rarity": "稀有" }
       ]
     },
     {
