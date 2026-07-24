@@ -2728,7 +2728,6 @@
                 reader.readAsText(file);
             }
 
-            // ===== 修复：车辆选择导出，正确输出“类型” =====
             function exportSelectCSV() {
                 if (selectEntries.length === 0) {
                     showToast('⚠️ 没有数据可导出', 'error');
@@ -2740,9 +2739,7 @@
                 const metaMap = { true: 'META', false: 'Other' };
                 const hlMap = { 'none': '无', 'red': '红色', 'yellow': '黄色' };
                 selectEntries.forEach(e => {
-                    // 确保“类型”字段正确输出：公路、拉力、越野、漂移
-                    const category = e.category || '公路';
-                    rows.push([e.brand, e.model, e.level, category, e.drive || '四驱', metaMap[e.meta] || 'Other', hlMap[e
+                    rows.push([e.brand, e.model, e.level, e.category, e.drive || '四驱', metaMap[e.meta] || 'Other', hlMap[e
                         .highlight] || '无']);
                 });
                 const csvContent = rows.map(row =>
@@ -2762,10 +2759,9 @@
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(link.href);
-                showToast(`✅ 导出 ${selectEntries.length} 条数据成功！`, 'success');
+                showToast('✅ 导出 ' + selectEntries.length + ' 条数据成功！', 'success');
             }
 
-            // ===== 修复：导入时正确识别“类型”列 =====
             function importSelectCSV(file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -2785,26 +2781,23 @@
                             driveIdx = -1,
                             metaIdx = -1,
                             hlIdx = -1;
+                        
+                        // 修复：严格区分"类型"和"分类"列
                         header.forEach((col, i) => {
                             const c = col.trim();
                             if (c === '品牌' || c === 'brand') brandIdx = i;
                             if (c === '车型' || c === 'model') modelIdx = i;
                             if (c === '等级' || c === 'level') levelIdx = i;
-                            if (c === '类型' || c === 'category' || c === '分类') catIdx = i;
+                            // 只让"类型"匹配 category
+                            if (c === '类型' || c === 'category') catIdx = i;
                             if (c === '驱动' || c === 'drive') driveIdx = i;
+                            // 只让"分类"匹配 meta
                             if (c === '分类' || c === 'meta') metaIdx = i;
                             if (c === '高亮' || c === 'highlight') hlIdx = i;
                         });
-                        // 如果没有找到“类型”列，尝试用“分类”列作为类型
-                        if (catIdx === -1) {
-                            // 再检查一遍是否把“分类”当成了“类型”
-                            header.forEach((col, i) => {
-                                const c = col.trim();
-                                if ((c === '分类' || c === 'category' || c === '类型') && catIdx === -1) catIdx = i;
-                            });
-                        }
+                        
                         if (brandIdx === -1 || modelIdx === -1 || levelIdx === -1 || catIdx === -1) {
-                            showToast('❌ 需要列：品牌,车型,等级,类型', 'error');
+                            showToast('❌ 需要列：品牌,车型,等级,类型,驱动,分类,高亮', 'error');
                             return;
                         }
                         const carIndex = new Set();
@@ -2825,9 +2818,11 @@
                             const brand = cols[brandIdx]?.trim() || '';
                             const model = cols[modelIdx]?.trim() || '';
                             let level = cols[levelIdx]?.trim() || 'B';
+                            // 从"类型"列读取 category
                             let category = cols[catIdx]?.trim() || '公路';
                             let drive = (driveIdx !== -1 && cols[driveIdx]) ? cols[driveIdx].trim() : '四驱';
                             let meta = false;
+                            // 从"分类"列读取 meta
                             if (metaIdx !== -1 && cols[metaIdx]) {
                                 const mVal = cols[metaIdx].trim();
                                 meta = metaMap[mVal] !== undefined ? metaMap[mVal] : false;
@@ -2843,17 +2838,7 @@
                                 continue;
                             }
                             if (!validLevels.includes(level)) level = 'B';
-                            // 修正：如果category不在有效列表中，但可能是带图标的，如"🏁 公路"
-                            let cleanCategory = category.replace(/^[🏁🏔️🌲🌀]\s*/, '');
-                            if (!validCats.includes(cleanCategory)) {
-                                // 尝试匹配
-                                if (category.includes('公路')) cleanCategory = '公路';
-                                else if (category.includes('拉力')) cleanCategory = '拉力';
-                                else if (category.includes('越野')) cleanCategory = '越野';
-                                else if (category.includes('漂移')) cleanCategory = '漂移';
-                                else cleanCategory = '公路';
-                            }
-                            category = cleanCategory;
+                            if (!validCats.includes(category)) category = '公路';
                             if (!validDrives.includes(drive)) drive = '四驱';
                             const exists = selectEntries.some(e =>
                                 e.brand === brand && e.model === model &&
