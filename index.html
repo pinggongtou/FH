@@ -2728,6 +2728,7 @@
                 reader.readAsText(file);
             }
 
+            // ===== 修复：车辆选择导出，正确输出“类型” =====
             function exportSelectCSV() {
                 if (selectEntries.length === 0) {
                     showToast('⚠️ 没有数据可导出', 'error');
@@ -2739,7 +2740,9 @@
                 const metaMap = { true: 'META', false: 'Other' };
                 const hlMap = { 'none': '无', 'red': '红色', 'yellow': '黄色' };
                 selectEntries.forEach(e => {
-                    rows.push([e.brand, e.model, e.level, e.category, e.drive || '四驱', metaMap[e.meta] || 'Other', hlMap[e
+                    // 确保“类型”字段正确输出：公路、拉力、越野、漂移
+                    const category = e.category || '公路';
+                    rows.push([e.brand, e.model, e.level, category, e.drive || '四驱', metaMap[e.meta] || 'Other', hlMap[e
                         .highlight] || '无']);
                 });
                 const csvContent = rows.map(row =>
@@ -2759,7 +2762,7 @@
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(link.href);
-                showToast('✅ 导出 ' + selectEntries.length + ' 条数据成功！', 'success');
+                showToast(`✅ 导出 ${selectEntries.length} 条数据成功！`, 'success');
             }
 
             function importSelectCSV(file) {
